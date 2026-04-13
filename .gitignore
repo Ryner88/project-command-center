@@ -1,0 +1,7 @@
+.next
+node_modules
+.env
+tsconfig.tsbuildinfo
+storage/temp/*
+storage/proposals/*
+!.gitkeep

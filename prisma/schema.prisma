@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProposalStatus {
+  DRAFT
+  IN_REVIEW
+  SENT
+  WON
+  LOST
+}
+
+enum ProposalSeedSourceType {
+  EMAIL
+  BRIEFING
+  MANUAL
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  briefingItems BriefingItem[]
+  proposalSeeds ProposalSeed[]
+  proposals     Proposal[]
+  exports       Export[]
+}
+
+model BriefingItem {
+  id             String   @id @default(cuid())
+  userId         String
+  title          String
+  summary        String
+  source         String
+  requiresAction Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ProposalSeed {
+  id              String                 @id @default(cuid())
+  userId          String
+  sourceType      ProposalSeedSourceType
+  sourceReference String?
+  clientName      String?
+  projectType     String?
+  summary         String
+  context         Json
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  proposals       Proposal[]
+}
+
+model Proposal {
+  id             String         @id @default(cuid())
+  userId         String
+  proposalSeedId String?
+  title          String
+  clientName     String
+  status         ProposalStatus @default(DRAFT)
+  summary        String
+  scope          Json
+  timeline       String?
+  risks          Json
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  proposalSeed   ProposalSeed?  @relation(fields: [proposalSeedId], references: [id], onDelete: SetNull)
+  exports        Export[]
+}
+
+model Export {
+  id         String   @id @default(cuid())
+  userId     String
+  proposalId String
+  fileName   String
+  filePath   String
+  mimeType   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+}
