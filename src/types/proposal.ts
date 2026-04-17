@@ -20,8 +20,9 @@ export type Proposal = {
 
 export type ProposalGenerationInput = {
   proposalSeedId?: string;
-  title: string;
-  clientName: string;
-  summary: string;
+  title?: string;
+  clientName?: string;
+  summary?: string;
   projectType?: string;
+  rawRequest?: string;
 };

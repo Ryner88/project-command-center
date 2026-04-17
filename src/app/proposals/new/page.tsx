@@ -1,8 +1,7 @@
 import { ProposalGeneratorForm } from "@/components/proposals/proposal-generator-form";
 import {
   ensureProposalSeedForBriefingItem,
-  getProposalSeedById,
-  getSampleProposalSeed
+  getProposalSeedById
 } from "@/services/proposal-seed.service";
 
 export const dynamic = "force-dynamic";
@@ -18,11 +17,10 @@ export default async function NewProposalPage({ searchParams }: NewProposalPageP
   const { seedId, briefingItemId } = await searchParams;
   const seed =
     (seedId ? await getProposalSeedById(seedId) : null) ??
-    (briefingItemId ? await ensureProposalSeedForBriefingItem(briefingItemId) : null) ??
-    (await getSampleProposalSeed());
-  const title = seed.clientName
+    (briefingItemId ? await ensureProposalSeedForBriefingItem(briefingItemId) : null);
+  const title = seed?.clientName
     ? `${seed.clientName} ${seed.projectType ?? "Project"} Proposal`
-    : `${seed.projectType ?? "Project"} Proposal`;
+    : `${seed?.projectType ?? "Project"} Proposal`;
 
   return (
     <main className="stack">
@@ -38,15 +36,19 @@ export default async function NewProposalPage({ searchParams }: NewProposalPageP
         <article className="frame stack">
           <div className="section-head">
             <span className="eyebrow">Review Step</span>
-            <h2>Extracted seed context</h2>
+            <h2>{seed ? "Original extracted context" : "Start from your own text"}</h2>
           </div>
           <div className="card">
-            <strong>{seed.summary}</strong>
+            <strong>{seed?.summary ?? "No built-in seed selected."}</strong>
             <p className="muted">
-              Source: {seed.sourceType} {seed.clientName ? `for ${seed.clientName}` : ""}
+              {seed
+                ? `Source: ${seed.sourceType}${seed.clientName ? ` for ${seed.clientName}` : ""}`
+                : "Paste the client request or type proposal notes and PCC will build the same generator payload used by seeded proposals."}
             </p>
             <p className="muted">
-              Review and edit the extracted context before generation. This keeps the workflow trustworthy instead of feeling like raw AI output.
+              {seed
+                ? "This card shows the original extracted context only. The edited inputs on the right are what PCC will use for generation."
+                : "You can still override title, client, project type, and summary before generation if you want tighter control."}
             </p>
           </div>
           <div className="card">
@@ -62,14 +64,15 @@ export default async function NewProposalPage({ searchParams }: NewProposalPageP
         <article className="frame stack">
           <div className="section-head">
             <span className="eyebrow">Control Step</span>
-            <h2>Review and edit proposal inputs</h2>
+            <h2>Edited inputs used for generation</h2>
           </div>
           <ProposalGeneratorForm
-            initialClientName={seed.clientName ?? ""}
-            initialProjectType={seed.projectType ?? ""}
-            initialSummary={seed.summary}
+            initialClientName={seed?.clientName ?? ""}
+            initialProjectType={seed?.projectType ?? ""}
+            initialSummary={seed?.summary ?? ""}
             initialTitle={title}
-            proposalSeedId={seed.id}
+            initialRawRequest={seed?.summary ?? ""}
+            proposalSeedId={seed?.id}
           />
         </article>
       </section>

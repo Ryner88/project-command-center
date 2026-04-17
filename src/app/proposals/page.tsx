@@ -43,7 +43,7 @@ export default async function ProposalsPage({ searchParams }: ProposalsPageProps
             {params.generated
               ? `Proposal ${params.generated} was generated.`
               : params.exported
-                ? `Proposal ${params.exported} was exported to local demo storage.`
+                ? `Proposal ${params.exported} export is ready for download.`
                 : `Proposal ${params.statusUpdated} status was updated.`}
           </p>
         </section>
@@ -123,7 +123,10 @@ export default async function ProposalsPage({ searchParams }: ProposalsPageProps
                 />
                 {exports.length > 0 && (
                   <p className="muted">
-                    Latest export: {exports[0].fileName} at {exports[0].filePath}
+                    Latest export:{" "}
+                    <a href={exports[0].filePath}>
+                      {exports[0].fileName}
+                    </a>
                   </p>
                 )}
               </div>

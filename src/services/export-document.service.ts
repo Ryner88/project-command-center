@@ -1,45 +1,35 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-
-import { getStoragePath } from "@/lib/utils";
 import { upsertProposalExport } from "@/services/export.service";
 import { getProposalById } from "@/services/proposal.service";
 
-export async function exportProposalPdf(id: string) {
+export async function createProposalExport(id: string) {
   const proposal = await getProposalById(id);
 
   if (!proposal) {
     throw new Error(`Proposal ${id} was not found.`);
   }
 
-  const safeFileName = `${slugify(proposal.clientName)}-${slugify(proposal.title)}.pdf`;
-  const directory = getStoragePath("proposals");
-  const filePath = path.join(directory, safeFileName);
-
-  await fs.mkdir(directory, { recursive: true });
-
-  const html = renderProposalHtml(proposal);
-  const puppeteer = await import("puppeteer");
-  const browser = await puppeteer.launch({ headless: true });
-
-  try {
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0" });
-    await page.pdf({
-      path: filePath,
-      format: "A4",
-      printBackground: true
-    });
-  } finally {
-    await browser.close();
-  }
+  const fileName = `${slugify(proposal.clientName)}-${slugify(proposal.title)}.html`;
 
   return upsertProposalExport({
     proposalId: proposal.id,
-    fileName: safeFileName,
-    filePath,
-    mimeType: "application/pdf"
+    fileName,
+    filePath: `/api/proposals/${proposal.id}/export/download`,
+    mimeType: "text/html"
   });
+}
+
+export async function getProposalExportDocument(id: string) {
+  const proposal = await getProposalById(id);
+
+  if (!proposal) {
+    throw new Error(`Proposal ${id} was not found.`);
+  }
+
+  return {
+    fileName: `${slugify(proposal.clientName)}-${slugify(proposal.title)}.html`,
+    mimeType: "text/html; charset=utf-8",
+    content: renderProposalHtml(proposal)
+  };
 }
 
 function renderProposalHtml(proposal: Awaited<ReturnType<typeof getProposalById>>) {
@@ -50,6 +40,9 @@ function renderProposalHtml(proposal: Awaited<ReturnType<typeof getProposalById>
   return `
     <html>
       <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>${escapeHtml(proposal.title)}</title>
         <style>
           * {
             box-sizing: border-box;
@@ -127,12 +120,20 @@ function renderProposalHtml(proposal: Awaited<ReturnType<typeof getProposalById>
             margin: 0;
             padding-left: 18px;
           }
+          @media print {
+            body {
+              background: white;
+            }
+            .page {
+              padding: 24px;
+            }
+          }
         </style>
       </head>
       <body>
         <div class="page">
           <section class="hero">
-            <div class="eyebrow">Project Command Center Proposal</div>
+            <div class="eyebrow">Project Command Center Proposal Export</div>
             <h1>${escapeHtml(proposal.title)}</h1>
             <p class="meta">Client: ${escapeHtml(proposal.clientName)} • Timeline: ${escapeHtml(
               proposal.timeline ?? "TBD"

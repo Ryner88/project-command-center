@@ -116,15 +116,28 @@ export default async function BriefingPage() {
                 </div>
               </div>
             ))}
-            <div className="card">
-              <strong>{dueProposal.title}</strong>
-              <p className="muted">
-                Existing proposal due this week: {dueProposal.dueDate}. Keep this in view while generating the new quote.
-              </p>
-              <Link className="ghost-button" href="/proposals">
-                View proposal dashboard
-              </Link>
-            </div>
+            {dueProposal ? (
+              <div className="card">
+                <strong>{dueProposal.title}</strong>
+                <p className="muted">
+                  Existing proposal due this week: {dueProposal.dueDate ?? "TBD"}. Keep this in
+                  view while generating the new quote.
+                </p>
+                <Link className="ghost-button" href="/proposals">
+                  View proposal dashboard
+                </Link>
+              </div>
+            ) : (
+              <div className="card">
+                <strong>No saved proposals yet</strong>
+                <p className="muted">
+                  Generated proposals will appear here once PCC creates and saves a real record.
+                </p>
+                <Link className="ghost-button" href="/proposals/new">
+                  Start a proposal
+                </Link>
+              </div>
+            )}
           </div>
         </article>
       </section>

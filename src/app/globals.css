@@ -138,6 +138,12 @@ select {
   font-size: 0.95rem;
 }
 
+.action-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .cta {
   display: inline-flex;
   align-items: center;
@@ -196,6 +202,15 @@ select {
 .highlight-card {
   background: linear-gradient(180deg, rgba(244, 217, 210, 0.55), rgba(255, 255, 255, 0.82));
   border-color: color-mix(in srgb, var(--accent) 25%, var(--line) 75%);
+}
+
+.demo-callout {
+  border-style: dashed;
+  background: linear-gradient(180deg, rgba(217, 230, 245, 0.85), rgba(255, 255, 255, 0.9));
+}
+
+.demo-callout strong {
+  margin-bottom: 8px;
 }
 
 .proposal-card {

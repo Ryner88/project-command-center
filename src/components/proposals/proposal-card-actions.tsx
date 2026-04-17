@@ -10,6 +10,12 @@ type ProposalCardActionsProps = {
   currentStatus: ProposalStatus;
 };
 
+type ExportResponse = {
+  data: {
+    filePath: string;
+  };
+};
+
 export function ProposalCardActions({
   proposalId,
   currentStatus
@@ -31,23 +37,32 @@ export function ProposalCardActions({
     });
   };
 
+  const runExport = () => {
+    startTransition(async () => {
+      const response = await fetch(`/api/proposals/${proposalId}/export`, {
+        method: "POST"
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const result = (await response.json()) as ExportResponse;
+      window.open(result.data.filePath, "_blank", "noopener,noreferrer");
+      router.push(`/proposals?exported=${proposalId}`);
+      router.refresh();
+    });
+  };
+
   return (
     <div className="stack actions-row">
       <button
         className="cta"
         disabled={isPending}
-        onClick={() =>
-          runRequest(
-            () =>
-              fetch(`/api/proposals/${proposalId}/export`, {
-                method: "POST"
-              }),
-            "exported"
-          )
-        }
+        onClick={runExport}
         type="button"
       >
-        {isPending ? "Working..." : "Export PDF"}
+        {isPending ? "Working..." : "Export HTML"}
       </button>
       <div className="inline-form">
         <select

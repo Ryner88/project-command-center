@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { exportProposalPdf } from "@/services/pdf.service";
+import { createProposalExport } from "@/services/export-document.service";
 
 type ExportRouteProps = {
   params: Promise<{ id: string }>;
@@ -8,7 +8,7 @@ type ExportRouteProps = {
 
 export async function POST(_request: NextRequest, { params }: ExportRouteProps) {
   const { id } = await params;
-  const result = await exportProposalPdf(id);
+  const result = await createProposalExport(id);
 
   return NextResponse.json({ data: result });
 }
