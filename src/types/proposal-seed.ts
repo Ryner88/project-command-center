@@ -1,3 +1,5 @@
+import type { ProposalDomain } from "@/lib/proposal-domain";
+
 export type ProposalSeedSourceType = "EMAIL" | "BRIEFING" | "MANUAL";
 
 export type ProposalSeed = {
@@ -7,6 +9,7 @@ export type ProposalSeed = {
   sourceReference?: string;
   clientName?: string;
   projectType?: string;
+  projectDomain?: ProposalDomain;
   summary: string;
   context: Record<string, unknown>;
 };

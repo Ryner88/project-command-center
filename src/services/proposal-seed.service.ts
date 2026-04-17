@@ -1,5 +1,6 @@
 import { mockImportantEmails } from "@/data/mock-emails";
 import type { Prisma } from "@prisma/client";
+import { inferProposalDomain } from "@/lib/proposal-domain";
 import { DEMO_USER_ID } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import {
@@ -22,8 +23,10 @@ const demoSeeds =
     sourceReference: "thread_123",
     clientName: "Sarah",
     projectType: "Website build",
+    projectDomain: "WEBSITE",
     summary: "Client requested a quote for a marketing website redesign with CMS.",
     context: {
+      projectDomain: "WEBSITE",
       pages: 10,
       cms: true
     }
@@ -61,7 +64,10 @@ export async function createProposalSeed(input: ProposalSeedInput): Promise<Prop
         clientName: input.clientName,
         projectType: input.projectType,
         summary: input.summary,
-        context: input.context as Prisma.InputJsonObject
+        context: {
+          ...(input.context ?? {}),
+          ...(input.projectDomain ? { projectDomain: input.projectDomain } : {})
+        } as Prisma.InputJsonObject
       }
     });
 
@@ -95,8 +101,10 @@ export async function getSampleProposalSeed(): Promise<ProposalSeed> {
       sourceType: "MANUAL",
       clientName: "Acme",
       projectType: "Website redesign",
+      projectDomain: "WEBSITE",
       summary: "Client requested a quote for a marketing website redesign with CMS.",
       context: {
+        projectDomain: "WEBSITE",
         pages: 10,
         cms: true
       }
@@ -147,6 +155,10 @@ export async function ensureProposalSeedForBriefingItem(
     sourceReference: briefingItemId,
     clientName: email.from.split("<")[0].trim(),
     projectType: inferredProjectType,
+    projectDomain: inferProposalDomain({
+      summary: email.preview,
+      projectType: inferredProjectType
+    }),
     summary: email.preview,
     context: {
       emailFrom: email.from,
@@ -165,6 +177,11 @@ function mapProposalSeedRecord(seed: {
   summary: string;
   context: unknown;
 }): ProposalSeed {
+  const context =
+    seed.context && typeof seed.context === "object" && !Array.isArray(seed.context)
+      ? (seed.context as Record<string, unknown>)
+      : {};
+
   return {
     id: seed.id,
     userId: seed.userId,
@@ -172,10 +189,9 @@ function mapProposalSeedRecord(seed: {
     sourceReference: seed.sourceReference ?? undefined,
     clientName: seed.clientName ?? undefined,
     projectType: seed.projectType ?? undefined,
+    projectDomain:
+      typeof context.projectDomain === "string" ? context.projectDomain as ProposalSeed["projectDomain"] : undefined,
     summary: seed.summary,
-    context:
-      seed.context && typeof seed.context === "object" && !Array.isArray(seed.context)
-        ? (seed.context as Record<string, unknown>)
-        : {}
+    context
   };
 }

@@ -1,10 +1,17 @@
 import { getOpenAIClient } from "@/lib/openai";
+import {
+  buildProposalDraft,
+  buildProposalPromptContext,
+  sanitizeProposalDraft
+} from "@/lib/proposal-domain";
 import { proposalGeneratorPrompt } from "@/prompts/proposal-generator";
 import type { ProposalGenerationInput } from "@/types/proposal";
 
 export async function generateProposalDraft(input: ProposalGenerationInput) {
+  const fallback = buildFallbackDraft(input);
+
   if (!process.env.OPENAI_API_KEY) {
-    return buildFallbackDraft(input);
+    return fallback;
   }
 
   try {
@@ -24,7 +31,10 @@ export async function generateProposalDraft(input: ProposalGenerationInput) {
         },
         {
           role: "user",
-          content: JSON.stringify(input)
+          content: JSON.stringify({
+            ...input,
+            promptContext: buildProposalPromptContext(input.projectDomain)
+          })
         }
       ]
     });
@@ -45,9 +55,7 @@ export async function generateProposalDraft(input: ProposalGenerationInput) {
       assumptions?: string[];
       priceRange?: string;
     };
-    const fallback = buildFallbackDraft(input);
-
-    return {
+    return sanitizeProposalDraft({
       summary:
         parsed.summary ??
         `Proposal for ${input.clientName}: ${input.summary}`,
@@ -73,37 +81,17 @@ export async function generateProposalDraft(input: ProposalGenerationInput) {
           ? parsed.assumptions
           : fallback.assumptions,
       priceRange: parsed.priceRange ?? fallback.priceRange
-    };
+    }, input as RequiredDraftInput);
   } catch {
-    return buildFallbackDraft(input);
+    return fallback;
   }
 }
 
+type RequiredDraftInput = Required<
+  Pick<ProposalGenerationInput, "clientName" | "summary">
+> &
+  Pick<ProposalGenerationInput, "projectType" | "projectDomain">;
+
 function buildFallbackDraft(input: ProposalGenerationInput) {
-  return {
-    summary: `Proposal for ${input.clientName}: ${input.summary}`,
-    scope: [
-      `${input.projectType ?? "Project"} discovery`,
-      "Strategic design and approvals",
-      "Build, QA, and launch support"
-    ],
-    deliverables: [
-      "Approved sitemap and page plan",
-      "Responsive design system and page designs",
-      "CMS build with contact and lead capture forms"
-    ],
-    taskBreakdown: [
-      "Week 1: discovery, sitemap, and content alignment",
-      "Week 2-3: design, revisions, and approvals",
-      "Week 4-5: development, CMS setup, and QA",
-      "Week 6: stakeholder review, launch prep, and handoff"
-    ],
-    timeline: "4-6 weeks",
-    risks: ["Client-side content delays", "Scope changes after kickoff"],
-    assumptions: [
-      "Client provides final copy and imagery on schedule",
-      "Feedback is consolidated into one review round per phase"
-    ],
-    priceRange: "$9,000 - $14,000"
-  };
+  return buildProposalDraft(input as RequiredDraftInput);
 }

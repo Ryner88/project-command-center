@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import {
+  getProposalDomainLabel,
+  inferProposalDomain
+} from "@/lib/proposal-domain";
+import {
   ensureCurrentUser,
   isDatabaseConfigured
 } from "@/services/current-user.service";
@@ -55,9 +59,10 @@ export async function generateProposal(input: ProposalGenerationInput): Promise<
     risks: generated.risks,
     assumptions: generated.assumptions,
     priceRange: generated.priceRange,
-    sourceLabel: normalized.sourceSeed
-      ? `${normalized.sourceSeed.sourceType.toLowerCase()} seed`
-      : "Manual draft"
+    sourceLabel: buildSourceLabel(
+      normalized.sourceSeed?.sourceType,
+      normalized.projectDomain
+    )
   };
 
   if (isDatabaseConfigured()) {
@@ -110,6 +115,10 @@ async function normalizeProposalGenerationInput(input: ProposalGenerationInput) 
     cleanText(input.projectType) ??
     sourceSeed?.projectType ??
     inferProjectType(summary);
+  const projectDomain =
+    input.projectDomain ??
+    sourceSeed?.projectDomain ??
+    inferProposalDomain({ summary, projectType });
   const title =
     cleanText(input.title) ?? `${clientName} ${projectType ?? "Project"} Proposal`;
 
@@ -120,7 +129,8 @@ async function normalizeProposalGenerationInput(input: ProposalGenerationInput) 
       title,
       clientName,
       summary,
-      projectType
+      projectType,
+      projectDomain
     };
   }
 
@@ -128,6 +138,7 @@ async function normalizeProposalGenerationInput(input: ProposalGenerationInput) 
     sourceType: "MANUAL",
     clientName,
     projectType,
+    projectDomain,
     summary,
     context: rawRequest ? { rawRequest } : {}
   });
@@ -138,7 +149,8 @@ async function normalizeProposalGenerationInput(input: ProposalGenerationInput) 
     title,
     clientName,
     summary,
-    projectType
+    projectType,
+    projectDomain
   };
 }
 
@@ -264,4 +276,26 @@ function inferProjectType(summary: string) {
   }
 
   return "Project";
+}
+
+function formatSourceType(sourceType: "EMAIL" | "BRIEFING" | "MANUAL") {
+  switch (sourceType) {
+    case "EMAIL":
+      return "Email seed";
+    case "BRIEFING":
+      return "Briefing seed";
+    case "MANUAL":
+      return "Manual seed";
+  }
+}
+
+function buildSourceLabel(
+  sourceType: "EMAIL" | "BRIEFING" | "MANUAL" | undefined,
+  projectDomain: ReturnType<typeof inferProposalDomain>
+) {
+  const source = !sourceType || sourceType === "MANUAL"
+    ? "Generated from manual input"
+    : `Generated from ${formatSourceType(sourceType).toLowerCase()}`;
+
+  return `${source} • ${getProposalDomainLabel(projectDomain) ?? "Other"}`;
 }

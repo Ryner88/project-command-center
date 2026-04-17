@@ -3,11 +3,17 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import {
+  proposalDomainOptions,
+  type ProposalDomain
+} from "@/lib/proposal-domain";
+
 type ProposalGeneratorFormProps = {
   proposalSeedId?: string;
   initialTitle: string;
   initialClientName: string;
   initialProjectType: string;
+  initialProjectDomain?: ProposalDomain;
   initialSummary: string;
   initialRawRequest?: string;
 };
@@ -17,6 +23,7 @@ export function ProposalGeneratorForm({
   initialTitle,
   initialClientName,
   initialProjectType,
+  initialProjectDomain,
   initialSummary,
   initialRawRequest = ""
 }: ProposalGeneratorFormProps) {
@@ -26,6 +33,7 @@ export function ProposalGeneratorForm({
   const [title, setTitle] = useState(initialTitle);
   const [clientName, setClientName] = useState(initialClientName);
   const [projectType, setProjectType] = useState(initialProjectType);
+  const [projectDomain, setProjectDomain] = useState(initialProjectDomain ?? "");
   const [summary, setSummary] = useState(initialSummary);
   const [rawRequest, setRawRequest] = useState(initialRawRequest);
 
@@ -40,6 +48,7 @@ export function ProposalGeneratorForm({
       title: readOptionalField(title),
       clientName: readOptionalField(clientName),
       projectType: readOptionalField(projectType),
+      projectDomain: readOptionalField(projectDomain) as ProposalDomain | undefined,
       summary: readOptionalField(summary),
       rawRequest: readOptionalField(rawRequest)
     };
@@ -103,27 +112,42 @@ export function ProposalGeneratorForm({
           <input
             name="projectType"
             onChange={(event) => setProjectType(event.target.value)}
-            placeholder="Project type"
+            placeholder="Project type, product, or engagement"
             value={projectType}
           />
         </label>
       </div>
       <label className="input-group">
-        <span className="field-label">Edited client request or proposal notes</span>
+        <span className="field-label">Project domain</span>
+        <select
+          name="projectDomain"
+          onChange={(event) => setProjectDomain(event.target.value)}
+          value={projectDomain}
+        >
+          <option value="">Auto-detect from request</option>
+          {proposalDomainOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="input-group">
+        <span className="field-label">Working request or source notes used for generation</span>
         <textarea
           name="rawRequest"
           onChange={(event) => setRawRequest(event.target.value)}
-          placeholder="Paste the client's request or type your own proposal notes"
+          placeholder="Paste the client request or type the source notes you want the generator to follow"
           rows={6}
           value={rawRequest}
         />
       </label>
       <label className="input-group">
-        <span className="field-label">Edited summary used for generation</span>
+        <span className="field-label">Generation summary</span>
         <textarea
           name="summary"
           onChange={(event) => setSummary(event.target.value)}
-          placeholder="Describe the project"
+          placeholder="Describe the project in a concise, decision-ready summary"
           rows={8}
           value={summary}
         />
