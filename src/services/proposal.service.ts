@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { isValidDateInput } from "@/lib/date";
+import { validateProposalDeadline } from "@/lib/proposal-schedule";
 import {
   getProposalDomainLabel,
   inferProposalDomain
@@ -51,6 +53,7 @@ export async function generateProposal(input: ProposalGenerationInput): Promise<
     title: normalized.title,
     clientName: normalized.clientName,
     status: "DRAFT",
+    dueDate: normalized.dueDate,
     summary: generated.summary,
     scope: generated.scope,
     deliverables: generated.deliverables,
@@ -61,7 +64,8 @@ export async function generateProposal(input: ProposalGenerationInput): Promise<
     priceRange: generated.priceRange,
     sourceLabel: buildSourceLabel(
       normalized.sourceSeed?.sourceType,
-      normalized.projectDomain
+      normalized.projectDomain,
+      normalized.projectDomainOther
     )
   };
 
@@ -111,10 +115,19 @@ async function normalizeProposalGenerationInput(input: ProposalGenerationInput) 
     sourceSeed?.clientName ??
     inferClientName(rawRequest) ??
     "New client";
+  const dueDate = normalizeDueDate(input.dueDate);
+  const deadlineValidationError = validateProposalDeadline(dueDate);
+
+  if (deadlineValidationError) {
+    throw new Error(deadlineValidationError);
+  }
+
   const projectType =
     cleanText(input.projectType) ??
     sourceSeed?.projectType ??
     inferProjectType(summary);
+  const projectDomainOther =
+    cleanText(input.projectDomainOther) ?? sourceSeed?.projectDomainOther;
   const projectDomain =
     input.projectDomain ??
     sourceSeed?.projectDomain ??
@@ -128,9 +141,11 @@ async function normalizeProposalGenerationInput(input: ProposalGenerationInput) 
       sourceSeed,
       title,
       clientName,
+      dueDate,
       summary,
       projectType,
-      projectDomain
+      projectDomain,
+      projectDomainOther
     };
   }
 
@@ -139,6 +154,7 @@ async function normalizeProposalGenerationInput(input: ProposalGenerationInput) 
     clientName,
     projectType,
     projectDomain,
+    projectDomainOther,
     summary,
     context: rawRequest ? { rawRequest } : {}
   });
@@ -148,9 +164,11 @@ async function normalizeProposalGenerationInput(input: ProposalGenerationInput) 
     sourceSeed: manualSeed,
     title,
     clientName,
+    dueDate,
     summary,
     projectType,
-    projectDomain
+    projectDomain,
+    projectDomainOther
   };
 }
 
@@ -244,6 +262,10 @@ function cleanText(value?: string) {
   return trimmed ? trimmed : undefined;
 }
 
+function normalizeDueDate(value?: string) {
+  return isValidDateInput(value) ? value : undefined;
+}
+
 function inferClientName(rawRequest?: string) {
   if (!rawRequest) {
     return undefined;
@@ -291,11 +313,12 @@ function formatSourceType(sourceType: "EMAIL" | "BRIEFING" | "MANUAL") {
 
 function buildSourceLabel(
   sourceType: "EMAIL" | "BRIEFING" | "MANUAL" | undefined,
-  projectDomain: ReturnType<typeof inferProposalDomain>
+  projectDomain: ReturnType<typeof inferProposalDomain>,
+  projectDomainOther?: string
 ) {
   const source = !sourceType || sourceType === "MANUAL"
     ? "Generated from manual input"
     : `Generated from ${formatSourceType(sourceType).toLowerCase()}`;
 
-  return `${source} • ${getProposalDomainLabel(projectDomain) ?? "Other"}`;
+  return `${source} • ${getProposalDomainLabel(projectDomain, projectDomainOther) ?? "Other"}`;
 }

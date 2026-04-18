@@ -7,13 +7,16 @@ import {
   proposalDomainOptions,
   type ProposalDomain
 } from "@/lib/proposal-domain";
+import { validateProposalDeadline } from "@/lib/proposal-schedule";
 
 type ProposalGeneratorFormProps = {
   proposalSeedId?: string;
   initialTitle: string;
   initialClientName: string;
+  initialDueDate?: string;
   initialProjectType: string;
   initialProjectDomain?: ProposalDomain;
+  initialProjectDomainOther?: string;
   initialSummary: string;
   initialRawRequest?: string;
 };
@@ -22,8 +25,10 @@ export function ProposalGeneratorForm({
   proposalSeedId,
   initialTitle,
   initialClientName,
+  initialDueDate = "",
   initialProjectType,
   initialProjectDomain,
+  initialProjectDomainOther = "",
   initialSummary,
   initialRawRequest = ""
 }: ProposalGeneratorFormProps) {
@@ -32,8 +37,10 @@ export function ProposalGeneratorForm({
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState(initialTitle);
   const [clientName, setClientName] = useState(initialClientName);
+  const [dueDate, setDueDate] = useState(initialDueDate);
   const [projectType, setProjectType] = useState(initialProjectType);
   const [projectDomain, setProjectDomain] = useState(initialProjectDomain ?? "");
+  const [projectDomainOther, setProjectDomainOther] = useState(initialProjectDomainOther);
   const [summary, setSummary] = useState(initialSummary);
   const [rawRequest, setRawRequest] = useState(initialRawRequest);
 
@@ -47,8 +54,13 @@ export function ProposalGeneratorForm({
       proposalSeedId: proposalSeedId || undefined,
       title: readOptionalField(title),
       clientName: readOptionalField(clientName),
+      dueDate: readOptionalField(dueDate),
       projectType: readOptionalField(projectType),
       projectDomain: readOptionalField(projectDomain) as ProposalDomain | undefined,
+      projectDomainOther:
+        projectDomain === "OTHER"
+          ? readOptionalField(projectDomainOther)
+          : undefined,
       summary: readOptionalField(summary),
       rawRequest: readOptionalField(rawRequest)
     };
@@ -68,6 +80,13 @@ export function ProposalGeneratorForm({
           return;
         }
 
+        const deadlineValidationError = validateProposalDeadline(payload.dueDate);
+
+        if (deadlineValidationError) {
+          setError(deadlineValidationError);
+          return;
+        }
+
         startTransition(async () => {
           const response = await fetch("/api/proposals/generate", {
             method: "POST",
@@ -78,7 +97,11 @@ export function ProposalGeneratorForm({
           });
 
           if (!response.ok) {
-            setError("Proposal generation failed.");
+            const result = (await response.json().catch(() => null)) as
+              | { error?: string }
+              | null;
+
+            setError(result?.error ?? "Proposal generation failed.");
             return;
           }
 
@@ -118,10 +141,26 @@ export function ProposalGeneratorForm({
         </label>
       </div>
       <label className="input-group">
+        <span className="field-label">Deadline</span>
+        <input
+          name="dueDate"
+          onChange={(event) => setDueDate(event.target.value)}
+          type="date"
+          value={dueDate}
+        />
+      </label>
+      <label className="input-group">
         <span className="field-label">Project domain</span>
         <select
           name="projectDomain"
-          onChange={(event) => setProjectDomain(event.target.value)}
+          onChange={(event) => {
+            const nextValue = event.target.value;
+            setProjectDomain(nextValue);
+
+            if (nextValue !== "OTHER") {
+              setProjectDomainOther("");
+            }
+          }}
           value={projectDomain}
         >
           <option value="">Auto-detect from request</option>
@@ -132,6 +171,17 @@ export function ProposalGeneratorForm({
           ))}
         </select>
       </label>
+      {projectDomain === "OTHER" ? (
+        <label className="input-group">
+          <span className="field-label">Custom project domain</span>
+          <input
+            name="projectDomainOther"
+            onChange={(event) => setProjectDomainOther(event.target.value)}
+            placeholder="Example: Logistics, hospitality, nonprofit, real estate"
+            value={projectDomainOther}
+          />
+        </label>
+      ) : null}
       <label className="input-group">
         <span className="field-label">Working request or source notes used for generation</span>
         <textarea
