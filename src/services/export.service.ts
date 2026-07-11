@@ -1,15 +1,63 @@
+import { prisma } from "@/lib/prisma";
+import { readDemoStore, writeDemoStore } from "@/services/demo-store.service";
+import {
+  ensureCurrentUser,
+  isDatabaseReady
+} from "@/services/current-user.service";
 import type { ProposalExport } from "@/types/export";
 
-const demoExports: ProposalExport[] = [];
-
 export async function listExportsForProposal(proposalId: string) {
-  return demoExports.filter((item) => item.proposalId === proposalId);
+  if (await isDatabaseReady()) {
+    const user = await ensureCurrentUser();
+    const exports = await prisma.export.findMany({
+      where: {
+        proposalId,
+        userId: user.id
+      },
+      orderBy: { createdAt: "desc" }
+    });
+
+    return exports.map((item) => ({
+      ...item,
+      createdAt: item.createdAt.toISOString()
+    }));
+  }
+
+  const store = await readDemoStore();
+  return store.exports.filter((item) => item.proposalId === proposalId);
 }
 
 export async function upsertProposalExport(
   proposalExport: Omit<ProposalExport, "id" | "createdAt">
 ) {
-  const existingExport = demoExports.find(
+  if (await isDatabaseReady()) {
+    const user = await ensureCurrentUser();
+    const exportRecord = await prisma.export.upsert({
+      where: {
+        proposalId: proposalExport.proposalId
+      },
+      update: {
+        fileName: proposalExport.fileName,
+        filePath: proposalExport.filePath,
+        mimeType: proposalExport.mimeType
+      },
+      create: {
+        userId: user.id,
+        proposalId: proposalExport.proposalId,
+        fileName: proposalExport.fileName,
+        filePath: proposalExport.filePath,
+        mimeType: proposalExport.mimeType
+      }
+    });
+
+    return {
+      ...exportRecord,
+      createdAt: exportRecord.createdAt.toISOString()
+    };
+  }
+
+  const store = await readDemoStore();
+  const existingExport = store.exports.find(
     (item) => item.proposalId === proposalExport.proposalId
   );
 
@@ -18,16 +66,18 @@ export async function upsertProposalExport(
     existingExport.filePath = proposalExport.filePath;
     existingExport.mimeType = proposalExport.mimeType;
     existingExport.createdAt = new Date().toISOString();
+    await writeDemoStore(store);
     return existingExport;
   }
 
   const exportRecord: ProposalExport = {
-    id: `export_${demoExports.length + 1}`,
+    id: `export_${store.exports.length + 1}`,
     createdAt: new Date().toISOString(),
     ...proposalExport
   };
 
-  demoExports.push(exportRecord);
+  store.exports.push(exportRecord);
+  await writeDemoStore(store);
 
   return exportRecord;
 }

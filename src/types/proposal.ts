@@ -1,3 +1,5 @@
+import type { ProposalDomain } from "@/lib/proposal-domain";
+
 export type ProposalStatus = "DRAFT" | "IN_REVIEW" | "SENT" | "WON" | "LOST";
 
 export type Proposal = {
@@ -5,7 +7,11 @@ export type Proposal = {
   proposalSeedId?: string;
   title: string;
   clientName: string;
+  projectType?: string;
+  projectDomain?: ProposalDomain;
+  projectDomainOther?: string;
   status: ProposalStatus;
+  startDate?: string;
   dueDate?: string;
   summary: string;
   scope: string[];
@@ -20,8 +26,13 @@ export type Proposal = {
 
 export type ProposalGenerationInput = {
   proposalSeedId?: string;
-  title: string;
-  clientName: string;
-  summary: string;
+  title?: string;
+  clientName?: string;
+  startDate?: string;
+  dueDate?: string;
+  summary?: string;
   projectType?: string;
+  projectDomain?: ProposalDomain;
+  projectDomainOther?: string;
+  rawRequest?: string;
 };

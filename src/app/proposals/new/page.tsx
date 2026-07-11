@@ -1,8 +1,8 @@
 import { ProposalGeneratorForm } from "@/components/proposals/proposal-generator-form";
+import { getProposalDomainLabel } from "@/lib/proposal-domain";
 import {
   ensureProposalSeedForBriefingItem,
-  getProposalSeedById,
-  getSampleProposalSeed
+  getProposalSeedById
 } from "@/services/proposal-seed.service";
 
 export const dynamic = "force-dynamic";
@@ -18,11 +18,10 @@ export default async function NewProposalPage({ searchParams }: NewProposalPageP
   const { seedId, briefingItemId } = await searchParams;
   const seed =
     (seedId ? await getProposalSeedById(seedId) : null) ??
-    (briefingItemId ? await ensureProposalSeedForBriefingItem(briefingItemId) : null) ??
-    (await getSampleProposalSeed());
-  const title = seed.clientName
+    (briefingItemId ? await ensureProposalSeedForBriefingItem(briefingItemId) : null);
+  const title = seed?.clientName
     ? `${seed.clientName} ${seed.projectType ?? "Project"} Proposal`
-    : `${seed.projectType ?? "Project"} Proposal`;
+    : `${seed?.projectType ?? "Project"} Proposal`;
 
   return (
     <main className="stack">
@@ -33,20 +32,35 @@ export default async function NewProposalPage({ searchParams }: NewProposalPageP
           The estimator is implemented as the proposal creation flow rather than
           as a separate product module.
         </p>
+        <div className="card source-context-card">
+          <strong>Source context carried into generation</strong>
+          <p>
+            {seed
+              ? `Using saved ${seed.sourceType.toLowerCase()} context${seed.clientName ? ` for ${seed.clientName}` : ""}${seed.projectType ? ` • ${seed.projectType}` : ""}.`
+              : "No briefing seed selected, so this flow will create a proposal directly from manual input."}
+          </p>
+          <p className="muted">
+            The controls below are prefilled from the selected source when available, then saved into the generated proposal record.
+          </p>
+        </div>
       </section>
       <section className="grid two">
         <article className="frame stack">
           <div className="section-head">
-            <span className="eyebrow">Review Step</span>
-            <h2>Extracted seed context</h2>
+            <span className="eyebrow">Input Context</span>
+            <h2>{seed ? "Original saved source input" : "Start from direct manual input"}</h2>
           </div>
           <div className="card">
-            <strong>{seed.summary}</strong>
+            <strong>{seed?.summary ?? "No built-in seed selected."}</strong>
             <p className="muted">
-              Source: {seed.sourceType} {seed.clientName ? `for ${seed.clientName}` : ""}
+              {seed
+                ? `Source: ${seed.sourceType}${seed.clientName ? ` for ${seed.clientName}` : ""}${seed.projectDomain ? ` • Domain: ${getProposalDomainLabel(seed.projectDomain)}` : ""}`
+                : "Enter the manual request details on the right and PCC will save a generated proposal from those exact inputs."}
             </p>
             <p className="muted">
-              Review and edit the extracted context before generation. This keeps the workflow trustworthy instead of feeling like raw AI output.
+              {seed
+                ? "This card shows the original saved source only. The edited controls on the right are the actual inputs used for generation."
+                : "Use the controls on the right to define the domain, working request, and summary that should drive the saved generated output."}
             </p>
           </div>
           <div className="card">
@@ -61,15 +75,26 @@ export default async function NewProposalPage({ searchParams }: NewProposalPageP
         </article>
         <article className="frame stack">
           <div className="section-head">
-            <span className="eyebrow">Control Step</span>
-            <h2>Review and edit proposal inputs</h2>
+            <span className="eyebrow">Generation Controls</span>
+            <h2>Saved inputs used for the generated proposal</h2>
+          </div>
+          <div className="card">
+            <strong>Context, timeline, and generation flow</strong>
+            <p className="muted">
+              Review the source context first, confirm dates and domain next, then generate a proposal that lands in the dashboard ready for export.
+            </p>
           </div>
           <ProposalGeneratorForm
-            initialClientName={seed.clientName ?? ""}
-            initialProjectType={seed.projectType ?? ""}
-            initialSummary={seed.summary}
+            initialClientName={seed?.clientName ?? ""}
+            initialStartDate=""
+            initialDueDate=""
+            initialProjectDomain={seed?.projectDomain}
+            initialProjectDomainOther={seed?.projectDomainOther}
+            initialProjectType={seed?.projectType ?? ""}
+            initialSummary={seed?.summary ?? ""}
             initialTitle={title}
-            proposalSeedId={seed.id}
+            initialRawRequest={seed?.summary ?? ""}
+            proposalSeedId={seed?.id}
           />
         </article>
       </section>
