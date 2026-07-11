@@ -33,7 +33,10 @@ export async function generateProposalDraft(input: ProposalGenerationInput) {
           role: "user",
           content: JSON.stringify({
             ...input,
-            promptContext: buildProposalPromptContext(input.projectDomain)
+            promptContext: buildProposalPromptContext(
+              input.projectDomain,
+              input.projectDomainOther
+            )
           })
         }
       ]
@@ -90,7 +93,10 @@ export async function generateProposalDraft(input: ProposalGenerationInput) {
 type RequiredDraftInput = Required<
   Pick<ProposalGenerationInput, "clientName" | "summary">
 > &
-  Pick<ProposalGenerationInput, "projectType" | "projectDomain">;
+  Pick<
+    ProposalGenerationInput,
+    "projectType" | "projectDomain" | "projectDomainOther"
+  >;
 
 function buildFallbackDraft(input: ProposalGenerationInput) {
   return buildProposalDraft(input as RequiredDraftInput);

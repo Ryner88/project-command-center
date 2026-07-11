@@ -6,3 +6,5 @@ tsconfig.tsbuildinfo
 storage/temp/*
 storage/proposals/*
 !.gitkeep
+.vercel
+.env*.local

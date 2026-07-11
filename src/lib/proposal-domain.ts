@@ -26,6 +26,7 @@ export type ProposalDraftInput = {
   summary: string;
   projectType?: string;
   projectDomain?: ProposalDomain;
+  projectDomainOther?: string;
 };
 
 type DomainTemplate = Omit<ProposalDraftSections, "summary"> & {
@@ -278,8 +279,19 @@ const domainTemplates: Record<ProposalDomain, DomainTemplate> = {
   }
 };
 
-export function getProposalDomainLabel(domain?: ProposalDomain) {
-  return domain ? domainLabelMap[domain] : undefined;
+export function getProposalDomainLabel(
+  domain?: ProposalDomain,
+  customDomain?: string
+) {
+  if (!domain) {
+    return undefined;
+  }
+
+  if (domain === "OTHER" && customDomain?.trim()) {
+    return customDomain.trim();
+  }
+
+  return domainLabelMap[domain];
 }
 
 export function inferProposalDomain(input: {
@@ -393,12 +405,15 @@ export function buildProposalDraft(input: ProposalDraftInput): ProposalDraftSect
   };
 }
 
-export function buildProposalPromptContext(domain?: ProposalDomain) {
+export function buildProposalPromptContext(
+  domain?: ProposalDomain,
+  customDomain?: string
+) {
   if (!domain) {
     return "";
   }
 
-  const label = getProposalDomainLabel(domain);
+  const label = getProposalDomainLabel(domain, customDomain);
 
   if (domain === "MEDICAL_HEALTHCARE") {
     return [

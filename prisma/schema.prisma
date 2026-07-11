@@ -21,6 +21,16 @@ enum ProposalSeedSourceType {
   MANUAL
 }
 
+enum ProposalDomain {
+  WEBSITE
+  SAAS_SOFTWARE
+  EDUCATION_SCHOOL
+  MEDICAL_HEALTHCARE
+  INTERNAL_TOOL
+  FINANCE
+  OTHER
+}
+
 model User {
   id            String         @id @default(cuid())
   email         String         @unique
@@ -52,6 +62,8 @@ model ProposalSeed {
   sourceReference String?
   clientName      String?
   projectType     String?
+  projectDomain   ProposalDomain?
+  projectDomainOther String?
   summary         String
   context         Json
   createdAt       DateTime               @default(now())
@@ -66,7 +78,11 @@ model Proposal {
   proposalSeedId String?
   title          String
   clientName     String
+  projectType    String?
+  projectDomain  ProposalDomain?
+  projectDomainOther String?
   status         ProposalStatus @default(DRAFT)
+  startDate      String?
   dueDate        String?
   summary        String
   scope          Json

@@ -7,7 +7,11 @@ export type Proposal = {
   proposalSeedId?: string;
   title: string;
   clientName: string;
+  projectType?: string;
+  projectDomain?: ProposalDomain;
+  projectDomainOther?: string;
   status: ProposalStatus;
+  startDate?: string;
   dueDate?: string;
   summary: string;
   scope: string[];
@@ -24,8 +28,11 @@ export type ProposalGenerationInput = {
   proposalSeedId?: string;
   title?: string;
   clientName?: string;
+  startDate?: string;
+  dueDate?: string;
   summary?: string;
   projectType?: string;
   projectDomain?: ProposalDomain;
+  projectDomainOther?: string;
   rawRequest?: string;
 };

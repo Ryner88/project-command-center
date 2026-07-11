@@ -9,7 +9,7 @@ Project Command Center is a Next.js MVP for an agency-focused morning briefing a
 - Database: PostgreSQL + Prisma
 - AI: OpenAI API
 - Export: direct HTML download via route handler
-- Storage: local filesystem for demo mode
+- Storage: PostgreSQL in deployed mode, JSON-backed local demo store when `DATABASE_URL` is unset
 
 ## Architecture Notes
 
@@ -25,10 +25,12 @@ Project Command Center is a Next.js MVP for an agency-focused morning briefing a
 3. Generate Prisma client with `npm run prisma:generate`.
 4. Run migrations with `npm run prisma:migrate`.
 5. Start the app with `npm run dev`.
+6. Run tests with `npm test`.
 
 ## Demo Mode
 
 - `.env` and other local env variants are gitignored. Only `.env.example` is committed.
 - Gmail and Calendar are mocked through `src/services/integrations`, so the briefing works without real Google auth.
 - Proposal generation falls back to a local draft builder when `OPENAI_API_KEY` is not set.
+- Proposal persistence falls back to `storage/proposals/demo-store.json` when `DATABASE_URL` is not set, so generated proposals survive the redirect path in local demo mode.
 - The main route points judges to the three demo checkpoints: Briefing, New Proposal flow, and Proposal Dashboard.

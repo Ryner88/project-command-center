@@ -10,6 +10,7 @@ export type ProposalSeed = {
   clientName?: string;
   projectType?: string;
   projectDomain?: ProposalDomain;
+  projectDomainOther?: string;
   summary: string;
   context: Record<string, unknown>;
 };

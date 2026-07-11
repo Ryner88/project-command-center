@@ -1,4 +1,5 @@
 import { formatProposalDate } from "@/lib/date";
+import { AppError } from "@/lib/app-error";
 import { buildProposalSchedule } from "@/lib/proposal-schedule";
 import { upsertProposalExport } from "@/services/export.service";
 import { getProposalById } from "@/services/proposal.service";
@@ -7,7 +8,7 @@ export async function createProposalExport(id: string) {
   const proposal = await getProposalById(id);
 
   if (!proposal) {
-    throw new Error(`Proposal ${id} was not found.`);
+    throw new AppError(404, `Proposal ${id} was not found.`);
   }
 
   const fileName = `${buildProposalExportBaseName(proposal.clientName, proposal.title)}.html`;
@@ -24,7 +25,7 @@ export async function getProposalExportDocument(id: string) {
   const proposal = await getProposalById(id);
 
   if (!proposal) {
-    throw new Error(`Proposal ${id} was not found.`);
+    throw new AppError(404, `Proposal ${id} was not found.`);
   }
 
   return {
@@ -38,16 +39,19 @@ export async function getProposalPdfDocument(id: string) {
   const proposal = await getProposalById(id);
 
   if (!proposal) {
-    throw new Error(`Proposal ${id} was not found.`);
+    throw new AppError(404, `Proposal ${id} was not found.`);
   }
 
-  const { chromium } = await import("playwright");
-  const browser = await chromium.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"]
-  });
+  let browser:
+    | Awaited<ReturnType<typeof launchLocalChromium>>
+    | Awaited<ReturnType<typeof launchVercelChromium>>
+    | null = null;
 
   try {
+    browser = process.env.VERCEL
+      ? await launchVercelChromium()
+      : await launchLocalChromium();
+
     const page = await browser.newPage();
     await page.setContent(renderProposalHtml(proposal), {
       waitUntil: "load"
@@ -64,9 +68,36 @@ export async function getProposalPdfDocument(id: string) {
       mimeType: "application/pdf",
       content: new Uint8Array(pdf)
     };
+  } catch (error) {
+    throw new AppError(
+      503,
+      error instanceof Error && error.message
+        ? `PDF export is unavailable in this environment: ${error.message}`
+        : "PDF export is unavailable in this environment. Use the HTML export instead."
+    );
   } finally {
-    await browser.close();
+    await browser?.close();
   }
+}
+
+async function launchVercelChromium() {
+  const { chromium } = await import("playwright-core");
+  const chromiumBinary = (await import("@sparticuz/chromium")).default;
+
+  return chromium.launch({
+    headless: true,
+    args: chromiumBinary.args,
+    executablePath: await chromiumBinary.executablePath()
+  });
+}
+
+async function launchLocalChromium() {
+  const { chromium } = await import("playwright");
+
+  return chromium.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"]
+  });
 }
 
 export function renderProposalHtml(proposal: Awaited<ReturnType<typeof getProposalById>>) {
@@ -78,15 +109,16 @@ export function renderProposalHtml(proposal: Awaited<ReturnType<typeof getPropos
   const riskLevel = deriveRiskLevel(proposal.risks);
   const projectLabel = deriveProjectLabel(proposal);
   const schedule = proposal.dueDate
-    ? buildProposalSchedule(proposal.dueDate, proposal.taskBreakdown)
+    ? buildProposalSchedule(proposal.dueDate, proposal.taskBreakdown, proposal.startDate)
     : null;
   const displayTimeline = schedule
-    ? `${schedule.totalWeeks}-week delivery plan`
+    ? `${formatDuration(schedule.totalDays)} delivery plan`
     : proposal.timeline ?? "To be confirmed";
   const executiveSummary = buildExecutiveSummary(proposal, schedule);
   const scopeNarrative = buildScopeNarrative(proposal);
   const timelineNarrative = buildTimelineNarrative(proposal, schedule);
   const commercialNotes = buildCommercialNotes(proposal, displayTimeline);
+  const formattedStartDate = formatProposalDate(proposal.startDate);
   const formattedDeadline = formatProposalDate(proposal.dueDate);
   const hasDeadline = Boolean(formattedDeadline);
 
@@ -475,6 +507,29 @@ export function renderProposalHtml(proposal: Awaited<ReturnType<typeof getPropos
               max-width: none;
               padding: 0;
             }
+            .shell,
+            .content-grid,
+            .stack {
+              display: block;
+            }
+            .hero,
+            .kpi-grid,
+            .panel,
+            .footer {
+              margin-bottom: 14px;
+            }
+            .content-grid > *,
+            .stack > *,
+            .list-grid > *,
+            .note-list > * {
+              margin-bottom: 14px;
+            }
+            .content-grid > *:last-child,
+            .stack > *:last-child,
+            .list-grid > *:last-child,
+            .note-list > *:last-child {
+              margin-bottom: 0;
+            }
             .hero,
             .panel,
             .kpi,
@@ -486,6 +541,27 @@ export function renderProposalHtml(proposal: Awaited<ReturnType<typeof getPropos
               background: #ffffff !important;
               box-shadow: none !important;
               break-inside: avoid;
+            }
+            .commercial-box,
+            .note-item,
+            .price-range {
+              overflow-wrap: anywhere;
+            }
+            .note-item,
+            .commercial-box {
+              break-inside: avoid;
+              page-break-inside: avoid;
+            }
+            .footer {
+              position: static;
+              display: flex;
+              justify-content: space-between;
+              gap: 12px;
+              margin: 20px 0 0;
+              padding-top: 10px;
+              border-top: 1px solid var(--line);
+              break-inside: avoid;
+              page-break-inside: avoid;
             }
             a {
               color: inherit;
@@ -510,6 +586,7 @@ export function renderProposalHtml(proposal: Awaited<ReturnType<typeof getPropos
                     <span class="meta-pill">Client: ${escapeHtml(proposal.clientName)}</span>
                     <span class="meta-pill">Engagement: ${escapeHtml(projectLabel)}</span>
                     <span class="meta-pill">Timeline: ${escapeHtml(displayTimeline)}</span>
+                    ${formattedStartDate ? `<span class="meta-pill">Start: ${escapeHtml(formattedStartDate)}</span>` : ""}
                     ${hasDeadline ? `<span class="meta-pill">Deadline: ${escapeHtml(formattedDeadline ?? "")}</span>` : ""}
                     <span class="meta-pill">Estimate: ${escapeHtml(proposal.priceRange)}</span>
                   </div>
@@ -726,7 +803,7 @@ function buildExecutiveSummary(
   const deliverables = proposal.deliverables.length;
   const phaseLabel = detectPhaseLabel(proposal);
   const durationLabel = schedule
-    ? `${schedule.totalWeeks}-week dated delivery plan`
+    ? `${formatDuration(schedule.totalDays)} dated delivery plan`
     : proposal.timeline ?? "a timeline to be confirmed";
 
   return `${summary} This ${phaseLabel.toLowerCase()} is structured around ${deliverables} defined deliverable${deliverables === 1 ? "" : "s"}, with delivery planned over ${durationLabel} and commercial scope held within the stated estimate range.`;
@@ -746,7 +823,13 @@ function buildTimelineNarrative(
   schedule: ReturnType<typeof buildProposalSchedule>
 ) {
   if (schedule) {
-    return `The delivery plan is back-planned from the agreed deadline of ${schedule.deadlineLabel}. Each phase has a dated working window so reviews, QA, and handoff land on or before the final closeout milestone.`;
+    const startLabel = schedule.startDate
+      ? formatProposalDate(toDateInput(schedule.startDate))
+      : null;
+
+    return startLabel
+      ? `The delivery plan runs from the requested start date of ${startLabel} through the agreed deadline of ${schedule.deadlineLabel}. Each phase has a dated working window so reviews, QA, and handoff land on or before the final closeout milestone.`
+      : `The delivery plan is back-planned from the agreed deadline of ${schedule.deadlineLabel}. Each phase has a dated working window so reviews, QA, and handoff land on or before the final closeout milestone.`;
   }
 
   const taskCount = proposal.taskBreakdown.length;
@@ -775,6 +858,28 @@ function buildCommercialNotes(
       }
     ]
   };
+}
+
+function formatDuration(totalDays: number) {
+  const weeks = Math.floor(totalDays / 7);
+  const days = totalDays % 7;
+
+  if (weeks > 0 && days > 0) {
+    return `${weeks} week${weeks === 1 ? "" : "s"} ${days} day${days === 1 ? "" : "s"}`;
+  }
+
+  if (weeks > 0) {
+    return `${weeks} week${weeks === 1 ? "" : "s"}`;
+  }
+
+  return `${days} day${days === 1 ? "" : "s"}`;
+}
+
+function toDateInput(date: Date) {
+  const year = date.getUTCFullYear();
+  const month = `${date.getUTCMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getUTCDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function deriveRiskLevel(risks: string[]) {

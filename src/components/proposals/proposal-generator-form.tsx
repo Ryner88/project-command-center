@@ -13,6 +13,7 @@ type ProposalGeneratorFormProps = {
   proposalSeedId?: string;
   initialTitle: string;
   initialClientName: string;
+  initialStartDate?: string;
   initialDueDate?: string;
   initialProjectType: string;
   initialProjectDomain?: ProposalDomain;
@@ -21,10 +22,16 @@ type ProposalGeneratorFormProps = {
   initialRawRequest?: string;
 };
 
+type ApiErrorResponse = {
+  error?: string;
+  details?: string[];
+};
+
 export function ProposalGeneratorForm({
   proposalSeedId,
   initialTitle,
   initialClientName,
+  initialStartDate = "",
   initialDueDate = "",
   initialProjectType,
   initialProjectDomain,
@@ -37,6 +44,7 @@ export function ProposalGeneratorForm({
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState(initialTitle);
   const [clientName, setClientName] = useState(initialClientName);
+  const [startDate, setStartDate] = useState(initialStartDate);
   const [dueDate, setDueDate] = useState(initialDueDate);
   const [projectType, setProjectType] = useState(initialProjectType);
   const [projectDomain, setProjectDomain] = useState(initialProjectDomain ?? "");
@@ -54,6 +62,7 @@ export function ProposalGeneratorForm({
       proposalSeedId: proposalSeedId || undefined,
       title: readOptionalField(title),
       clientName: readOptionalField(clientName),
+      startDate: readOptionalField(startDate),
       dueDate: readOptionalField(dueDate),
       projectType: readOptionalField(projectType),
       projectDomain: readOptionalField(projectDomain) as ProposalDomain | undefined,
@@ -80,7 +89,32 @@ export function ProposalGeneratorForm({
           return;
         }
 
-        const deadlineValidationError = validateProposalDeadline(payload.dueDate);
+        if (!payload.proposalSeedId) {
+          if (!payload.clientName) {
+            setError("Enter the client name.");
+            return;
+          }
+
+          if (!payload.projectType) {
+            setError("Enter the project type.");
+            return;
+          }
+
+          if (!payload.projectDomain) {
+            setError("Select a project domain.");
+            return;
+          }
+        }
+
+        if (payload.projectDomain === "OTHER" && !payload.projectDomainOther) {
+          setError("Enter the custom project domain.");
+          return;
+        }
+
+        const deadlineValidationError = validateProposalDeadline(
+          payload.dueDate,
+          payload.startDate
+        );
 
         if (deadlineValidationError) {
           setError(deadlineValidationError);
@@ -97,11 +131,13 @@ export function ProposalGeneratorForm({
           });
 
           if (!response.ok) {
-            const result = (await response.json().catch(() => null)) as
-              | { error?: string }
-              | null;
+            const result = (await response.json().catch(() => null)) as ApiErrorResponse | null;
 
-            setError(result?.error ?? "Proposal generation failed.");
+            setError(
+              result?.details?.length
+                ? `${result.error ?? "Proposal generation failed."} ${result.details.join(" ")}`
+                : result?.error ?? "Proposal generation failed."
+            );
             return;
           }
 
@@ -141,6 +177,15 @@ export function ProposalGeneratorForm({
         </label>
       </div>
       <label className="input-group">
+        <span className="field-label">Requested start date</span>
+        <input
+          name="startDate"
+          onChange={(event) => setStartDate(event.target.value)}
+          type="date"
+          value={startDate}
+        />
+      </label>
+      <label className="input-group">
         <span className="field-label">Deadline</span>
         <input
           name="dueDate"
@@ -152,6 +197,7 @@ export function ProposalGeneratorForm({
       <label className="input-group">
         <span className="field-label">Project domain</span>
         <select
+          aria-label="Project domain"
           name="projectDomain"
           onChange={(event) => {
             const nextValue = event.target.value;
@@ -163,7 +209,9 @@ export function ProposalGeneratorForm({
           }}
           value={projectDomain}
         >
-          <option value="">Auto-detect from request</option>
+          <option disabled value="">
+            Select project domain
+          </option>
           {proposalDomainOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
@@ -183,7 +231,7 @@ export function ProposalGeneratorForm({
         </label>
       ) : null}
       <label className="input-group">
-        <span className="field-label">Working request or source notes used for generation</span>
+        <span className="field-label">Working request or source notes</span>
         <textarea
           name="rawRequest"
           onChange={(event) => setRawRequest(event.target.value)}
@@ -193,7 +241,7 @@ export function ProposalGeneratorForm({
         />
       </label>
       <label className="input-group">
-        <span className="field-label">Generation summary</span>
+        <span className="field-label">Summary used for generation</span>
         <textarea
           name="summary"
           onChange={(event) => setSummary(event.target.value)}

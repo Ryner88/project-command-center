@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { formatProposalDate } from "@/lib/date";
+import { getProposalDomainLabel } from "@/lib/proposal-domain";
 import { listExportsForProposal } from "@/services/export.service";
 import { getProposalById } from "@/services/proposal.service";
 
@@ -31,7 +33,17 @@ export default async function ProposalDetailPage({
         </p>
         <p className="muted">
           Client: {proposal.clientName}
+          {proposal.projectType ? ` • Type: ${proposal.projectType}` : ""}
+          {proposal.projectDomain
+            ? ` • Domain: ${getProposalDomainLabel(proposal.projectDomain, proposal.projectDomainOther)}`
+            : ""}
+          {proposal.startDate
+            ? ` • Start: ${formatProposalDate(proposal.startDate) ?? proposal.startDate}`
+            : ""}
           {proposal.timeline ? ` • Timeline: ${proposal.timeline}` : ""}
+          {proposal.dueDate
+            ? ` • Deadline: ${formatProposalDate(proposal.dueDate) ?? proposal.dueDate}`
+            : ""}
           {proposal.priceRange ? ` • ${proposal.priceRange}` : ""}
           {proposal.sourceLabel ? ` • Source: ${proposal.sourceLabel}` : ""}
         </p>
@@ -52,6 +64,15 @@ export default async function ProposalDetailPage({
         <div className="card">
           <p>{proposal.summary}</p>
         </div>
+        {proposal.projectDomain === "MEDICAL_HEALTHCARE" ? (
+          <div className="card">
+            <strong>Review flag</strong>
+            <p>
+              Regulated medical or healthcare language requires legal, privacy,
+              security, or compliance review before client delivery.
+            </p>
+          </div>
+        ) : null}
         <div className="grid three">
           <div className="card">
             <strong>Scope</strong>
@@ -98,9 +119,15 @@ export default async function ProposalDetailPage({
         </div>
         {exports.length > 0 ? (
           <div className="card">
-            <strong>Latest export</strong>
+            <strong>Latest export preview</strong>
             <p className="muted">
-              <a href={exports[0].filePath}>{exports[0].fileName}</a>
+              <a
+                href={exports[0].filePath}
+                rel="noreferrer"
+                target="_blank"
+              >
+                {exports[0].fileName}
+              </a>
             </p>
           </div>
         ) : null}

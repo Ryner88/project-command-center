@@ -3,42 +3,16 @@ import type { Prisma } from "@prisma/client";
 import { inferProposalDomain } from "@/lib/proposal-domain";
 import { DEMO_USER_ID } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
+import { readDemoStore, writeDemoStore } from "@/services/demo-store.service";
 import {
   ensureCurrentUser,
-  isDatabaseConfigured
+  isDatabaseConfigured,
+  isDatabaseReady
 } from "@/services/current-user.service";
 import type { ProposalSeedInput, ProposalSeed } from "@/types/proposal-seed";
 
-declare global {
-  var demoProposalSeeds: ProposalSeed[] | undefined;
-}
-
-const demoSeeds =
-  global.demoProposalSeeds ??
-  [
-  {
-    id: "seed_1",
-    userId: DEMO_USER_ID,
-    sourceType: "EMAIL",
-    sourceReference: "thread_123",
-    clientName: "Sarah",
-    projectType: "Website build",
-    projectDomain: "WEBSITE",
-    summary: "Client requested a quote for a marketing website redesign with CMS.",
-    context: {
-      projectDomain: "WEBSITE",
-      pages: 10,
-      cms: true
-    }
-  }
-];
-
-if (process.env.NODE_ENV !== "production") {
-  global.demoProposalSeeds = demoSeeds;
-}
-
 export async function listProposalSeeds(): Promise<ProposalSeed[]> {
-  if (isDatabaseConfigured()) {
+  if (await isDatabaseReady()) {
     const user = await ensureCurrentUser();
     const seeds = await prisma.proposalSeed.findMany({
       where: { userId: user.id },
@@ -50,11 +24,12 @@ export async function listProposalSeeds(): Promise<ProposalSeed[]> {
     }
   }
 
-  return demoSeeds;
+  const store = await readDemoStore();
+  return store.proposalSeeds;
 }
 
 export async function createProposalSeed(input: ProposalSeedInput): Promise<ProposalSeed> {
-  if (isDatabaseConfigured()) {
+  if (await isDatabaseReady()) {
     const user = await ensureCurrentUser();
     const seed = await prisma.proposalSeed.create({
       data: {
@@ -63,10 +38,15 @@ export async function createProposalSeed(input: ProposalSeedInput): Promise<Prop
         sourceReference: input.sourceReference,
         clientName: input.clientName,
         projectType: input.projectType,
+        projectDomain: input.projectDomain,
+        projectDomainOther: input.projectDomainOther,
         summary: input.summary,
         context: {
           ...(input.context ?? {}),
-          ...(input.projectDomain ? { projectDomain: input.projectDomain } : {})
+          ...(input.projectDomain ? { projectDomain: input.projectDomain } : {}),
+          ...(input.projectDomainOther
+            ? { projectDomainOther: input.projectDomainOther }
+            : {})
         } as Prisma.InputJsonObject
       }
     });
@@ -74,19 +54,21 @@ export async function createProposalSeed(input: ProposalSeedInput): Promise<Prop
     return mapProposalSeedRecord(seed);
   }
 
+  const store = await readDemoStore();
   const seed: ProposalSeed = {
-    id: `seed_${demoSeeds.length + 1}`,
+    id: `seed_${store.proposalSeeds.length + 1}`,
     userId: DEMO_USER_ID,
     ...input
   };
 
-  demoSeeds.push(seed);
+  store.proposalSeeds.push(seed);
+  await writeDemoStore(store);
 
   return seed;
 }
 
 export async function getSampleProposalSeed(): Promise<ProposalSeed> {
-  if (isDatabaseConfigured()) {
+  if (await isDatabaseReady()) {
     const user = await ensureCurrentUser();
     const existing = await prisma.proposalSeed.findFirst({
       where: { userId: user.id },
@@ -111,11 +93,12 @@ export async function getSampleProposalSeed(): Promise<ProposalSeed> {
     });
   }
 
-  return demoSeeds[0];
+  const store = await readDemoStore();
+  return store.proposalSeeds[0];
 }
 
 export async function getProposalSeedById(id: string): Promise<ProposalSeed | null> {
-  if (isDatabaseConfigured()) {
+  if (await isDatabaseReady()) {
     const user = await ensureCurrentUser();
     const seed = await prisma.proposalSeed.findFirst({
       where: {
@@ -127,17 +110,33 @@ export async function getProposalSeedById(id: string): Promise<ProposalSeed | nu
     return seed ? mapProposalSeedRecord(seed) : null;
   }
 
-  return demoSeeds.find((seed) => seed.id === id) ?? null;
+  const store = await readDemoStore();
+  return store.proposalSeeds.find((seed) => seed.id === id) ?? null;
 }
 
 export async function ensureProposalSeedForBriefingItem(
   briefingItemId: string
 ): Promise<ProposalSeed | null> {
-  const existingSeed =
-    demoSeeds.find((seed) => seed.sourceReference === briefingItemId) ?? null;
+  if (isDatabaseConfigured() && (await isDatabaseReady())) {
+    const user = await ensureCurrentUser();
+    const existingSeed = await prisma.proposalSeed.findFirst({
+      where: {
+        sourceReference: briefingItemId,
+        userId: user.id
+      }
+    });
 
-  if (existingSeed) {
-    return existingSeed;
+    if (existingSeed) {
+      return mapProposalSeedRecord(existingSeed);
+    }
+  } else {
+    const store = await readDemoStore();
+    const existingSeed =
+      store.proposalSeeds.find((seed) => seed.sourceReference === briefingItemId) ?? null;
+
+    if (existingSeed) {
+      return existingSeed;
+    }
   }
 
   const email = mockImportantEmails.find((item) => item.id === briefingItemId);
@@ -174,6 +173,8 @@ function mapProposalSeedRecord(seed: {
   sourceReference: string | null;
   clientName: string | null;
   projectType: string | null;
+  projectDomain: ProposalSeed["projectDomain"] | null;
+  projectDomainOther: string | null;
   summary: string;
   context: unknown;
 }): ProposalSeed {
@@ -190,7 +191,15 @@ function mapProposalSeedRecord(seed: {
     clientName: seed.clientName ?? undefined,
     projectType: seed.projectType ?? undefined,
     projectDomain:
-      typeof context.projectDomain === "string" ? context.projectDomain as ProposalSeed["projectDomain"] : undefined,
+      seed.projectDomain ??
+      (typeof context.projectDomain === "string"
+        ? (context.projectDomain as ProposalSeed["projectDomain"])
+        : undefined),
+    projectDomainOther:
+      seed.projectDomainOther ??
+      (typeof context.projectDomainOther === "string"
+        ? context.projectDomainOther
+        : undefined),
     summary: seed.summary,
     context
   };

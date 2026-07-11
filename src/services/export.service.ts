@@ -1,22 +1,13 @@
 import { prisma } from "@/lib/prisma";
+import { readDemoStore, writeDemoStore } from "@/services/demo-store.service";
 import {
   ensureCurrentUser,
-  isDatabaseConfigured
+  isDatabaseReady
 } from "@/services/current-user.service";
 import type { ProposalExport } from "@/types/export";
 
-declare global {
-  var demoProposalExports: ProposalExport[] | undefined;
-}
-
-const demoExports = global.demoProposalExports ?? [];
-
-if (process.env.NODE_ENV !== "production") {
-  global.demoProposalExports = demoExports;
-}
-
 export async function listExportsForProposal(proposalId: string) {
-  if (isDatabaseConfigured()) {
+  if (await isDatabaseReady()) {
     const user = await ensureCurrentUser();
     const exports = await prisma.export.findMany({
       where: {
@@ -32,13 +23,14 @@ export async function listExportsForProposal(proposalId: string) {
     }));
   }
 
-  return demoExports.filter((item) => item.proposalId === proposalId);
+  const store = await readDemoStore();
+  return store.exports.filter((item) => item.proposalId === proposalId);
 }
 
 export async function upsertProposalExport(
   proposalExport: Omit<ProposalExport, "id" | "createdAt">
 ) {
-  if (isDatabaseConfigured()) {
+  if (await isDatabaseReady()) {
     const user = await ensureCurrentUser();
     const exportRecord = await prisma.export.upsert({
       where: {
@@ -64,7 +56,8 @@ export async function upsertProposalExport(
     };
   }
 
-  const existingExport = demoExports.find(
+  const store = await readDemoStore();
+  const existingExport = store.exports.find(
     (item) => item.proposalId === proposalExport.proposalId
   );
 
@@ -73,16 +66,18 @@ export async function upsertProposalExport(
     existingExport.filePath = proposalExport.filePath;
     existingExport.mimeType = proposalExport.mimeType;
     existingExport.createdAt = new Date().toISOString();
+    await writeDemoStore(store);
     return existingExport;
   }
 
   const exportRecord: ProposalExport = {
-    id: `export_${demoExports.length + 1}`,
+    id: `export_${store.exports.length + 1}`,
     createdAt: new Date().toISOString(),
     ...proposalExport
   };
 
-  demoExports.push(exportRecord);
+  store.exports.push(exportRecord);
+  await writeDemoStore(store);
 
   return exportRecord;
 }
