@@ -6,11 +6,9 @@ import {
   getProposalDomainLabel,
   inferProposalDomain
 } from "@/lib/proposal-domain";
+import { getDataMode, isDatabaseMode } from "@/services/data-mode.service";
 import { readDemoStore, writeDemoStore } from "@/services/demo-store.service";
-import {
-  ensureCurrentUser,
-  isDatabaseReady
-} from "@/services/current-user.service";
+import { ensureCurrentUser } from "@/services/current-user.service";
 import type { ProposalStatus } from "@/types/proposal";
 import type { ProposalGenerationInput, Proposal } from "@/types/proposal";
 
@@ -21,16 +19,14 @@ import {
 import { generateProposalDraft } from "@/services/ai/proposal-ai.service";
 
 export async function listProposals(): Promise<Proposal[]> {
-  if (await isDatabaseReady()) {
+  if (isDatabaseMode(await getDataMode())) {
     const user = await ensureCurrentUser();
     const proposals = await prisma.proposal.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: "desc" }
     });
 
-    if (proposals.length > 0) {
-      return proposals.map(mapProposalRecord);
-    }
+    return proposals.map(mapProposalRecord);
   }
 
   const store = await readDemoStore();
@@ -38,7 +34,7 @@ export async function listProposals(): Promise<Proposal[]> {
 }
 
 export async function generateProposal(input: ProposalGenerationInput): Promise<Proposal> {
-  const databaseReady = await isDatabaseReady();
+  const databaseReady = isDatabaseMode(await getDataMode());
 
   if (process.env.VERCEL && !databaseReady) {
     throw new AppError(
@@ -214,7 +210,7 @@ async function normalizeProposalGenerationInput(input: ProposalGenerationInput) 
 }
 
 export async function getProposalById(id: string): Promise<Proposal | null> {
-  if (await isDatabaseReady()) {
+  if (isDatabaseMode(await getDataMode())) {
     const user = await ensureCurrentUser();
     const proposal = await prisma.proposal.findFirst({
       where: {
@@ -223,9 +219,7 @@ export async function getProposalById(id: string): Promise<Proposal | null> {
       }
     });
 
-    if (proposal) {
-      return mapProposalRecord(proposal);
-    }
+    return proposal ? mapProposalRecord(proposal) : null;
   }
 
   const store = await readDemoStore();
@@ -236,7 +230,7 @@ export async function updateProposalStatus(
   id: string,
   status: ProposalStatus
 ): Promise<Proposal | null> {
-  if (await isDatabaseReady()) {
+  if (isDatabaseMode(await getDataMode())) {
     const user = await ensureCurrentUser();
     const proposal = await prisma.proposal.updateManyAndReturn({
       where: {

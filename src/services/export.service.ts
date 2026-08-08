@@ -1,13 +1,11 @@
 import { prisma } from "@/lib/prisma";
+import { getDataMode, isDatabaseMode } from "@/services/data-mode.service";
 import { readDemoStore, writeDemoStore } from "@/services/demo-store.service";
-import {
-  ensureCurrentUser,
-  isDatabaseReady
-} from "@/services/current-user.service";
+import { ensureCurrentUser } from "@/services/current-user.service";
 import type { ProposalExport } from "@/types/export";
 
 export async function listExportsForProposal(proposalId: string) {
-  if (await isDatabaseReady()) {
+  if (isDatabaseMode(await getDataMode())) {
     const user = await ensureCurrentUser();
     const exports = await prisma.export.findMany({
       where: {
@@ -30,7 +28,7 @@ export async function listExportsForProposal(proposalId: string) {
 export async function upsertProposalExport(
   proposalExport: Omit<ProposalExport, "id" | "createdAt">
 ) {
-  if (await isDatabaseReady()) {
+  if (isDatabaseMode(await getDataMode())) {
     const user = await ensureCurrentUser();
     const exportRecord = await prisma.export.upsert({
       where: {

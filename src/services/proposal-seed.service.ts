@@ -3,25 +3,20 @@ import type { Prisma } from "@prisma/client";
 import { inferProposalDomain } from "@/lib/proposal-domain";
 import { DEMO_USER_ID } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
+import { getDataMode, isDatabaseMode } from "@/services/data-mode.service";
 import { readDemoStore, writeDemoStore } from "@/services/demo-store.service";
-import {
-  ensureCurrentUser,
-  isDatabaseConfigured,
-  isDatabaseReady
-} from "@/services/current-user.service";
+import { ensureCurrentUser } from "@/services/current-user.service";
 import type { ProposalSeedInput, ProposalSeed } from "@/types/proposal-seed";
 
 export async function listProposalSeeds(): Promise<ProposalSeed[]> {
-  if (await isDatabaseReady()) {
+  if (isDatabaseMode(await getDataMode())) {
     const user = await ensureCurrentUser();
     const seeds = await prisma.proposalSeed.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: "desc" }
     });
 
-    if (seeds.length > 0) {
-      return seeds.map(mapProposalSeedRecord);
-    }
+    return seeds.map(mapProposalSeedRecord);
   }
 
   const store = await readDemoStore();
@@ -29,7 +24,7 @@ export async function listProposalSeeds(): Promise<ProposalSeed[]> {
 }
 
 export async function createProposalSeed(input: ProposalSeedInput): Promise<ProposalSeed> {
-  if (await isDatabaseReady()) {
+  if (isDatabaseMode(await getDataMode())) {
     const user = await ensureCurrentUser();
     const seed = await prisma.proposalSeed.create({
       data: {
@@ -68,7 +63,7 @@ export async function createProposalSeed(input: ProposalSeedInput): Promise<Prop
 }
 
 export async function getSampleProposalSeed(): Promise<ProposalSeed> {
-  if (await isDatabaseReady()) {
+  if (isDatabaseMode(await getDataMode())) {
     const user = await ensureCurrentUser();
     const existing = await prisma.proposalSeed.findFirst({
       where: { userId: user.id },
@@ -98,7 +93,7 @@ export async function getSampleProposalSeed(): Promise<ProposalSeed> {
 }
 
 export async function getProposalSeedById(id: string): Promise<ProposalSeed | null> {
-  if (await isDatabaseReady()) {
+  if (isDatabaseMode(await getDataMode())) {
     const user = await ensureCurrentUser();
     const seed = await prisma.proposalSeed.findFirst({
       where: {
@@ -117,7 +112,7 @@ export async function getProposalSeedById(id: string): Promise<ProposalSeed | nu
 export async function ensureProposalSeedForBriefingItem(
   briefingItemId: string
 ): Promise<ProposalSeed | null> {
-  if (isDatabaseConfigured() && (await isDatabaseReady())) {
+  if (isDatabaseMode(await getDataMode())) {
     const user = await ensureCurrentUser();
     const existingSeed = await prisma.proposalSeed.findFirst({
       where: {
