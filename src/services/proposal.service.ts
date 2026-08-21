@@ -8,7 +8,10 @@ import {
 } from "@/lib/proposal-domain";
 import { getDataMode, isDatabaseMode } from "@/services/data-mode.service";
 import { readDemoStore, writeDemoStore } from "@/services/demo-store.service";
-import { ensureCurrentUser } from "@/services/current-user.service";
+import {
+  ensureCurrentUser,
+  isDatabaseReady
+} from "@/services/current-user.service";
 import type { ProposalStatus } from "@/types/proposal";
 import type { ProposalGenerationInput, Proposal } from "@/types/proposal";
 
@@ -34,7 +37,8 @@ export async function listProposals(): Promise<Proposal[]> {
 }
 
 export async function generateProposal(input: ProposalGenerationInput): Promise<Proposal> {
-  const databaseReady = isDatabaseMode(await getDataMode());
+  const dataMode = await getDataMode();
+  const databaseReady = isDatabaseMode(dataMode) && (await isDatabaseReady());
 
   if (process.env.VERCEL && !databaseReady) {
     throw new AppError(

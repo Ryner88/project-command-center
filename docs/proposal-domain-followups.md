@@ -14,6 +14,15 @@ Automated coverage now includes:
 - Domain draft regression tests for website, finance, school, and medical samples.
 - Integration coverage for manual form submit -> generate route -> demo persistence -> redirect -> saved detail render.
 - Demo-mode regression coverage confirming generated proposals survive a module reload before the detail view is rendered.
+- Deployment health coverage confirming production-like runtime stays on the database path when readiness fails.
+- Deployment readiness coverage confirming `/api/health` reports database mode, blocked production readiness, local demo mode, and Vercel no-database failure states.
+
+Four-project deployment verification status:
+
+- Website project: domain generation remains covered; production-like no-demo fallback is verified locally, but production `/api/health` is still unavailable until the new route deploys.
+- Finance project: domain generation remains covered; production Neon Postgres is reachable and migrations are current, but a controlled write/read/redeployment durability drill is still pending.
+- School project: domain generation remains covered; local no-database demo mode still serves JSON-backed records only in development.
+- Medical project: domain generation remains covered; production readiness remains blocked until the health/no-fallback slice deploys and application rollback is tested without reversing migrations.
 
 Commands used:
 
@@ -21,15 +30,38 @@ Commands used:
 - `npx tsc scripts/manual-domain-check.ts src/lib/proposal-domain.ts --outDir /tmp/manual-domain-check --module commonjs --moduleResolution node --target es2022 --esModuleInterop`
 - `node /tmp/manual-domain-check/scripts/manual-domain-check.js`
 - `npm test`
+- `npm run build`
+- `npm run build:vercel`
+- `npm run prisma:migrate:deploy` failed locally with Prisma `P1012` because `DATABASE_URL` was not exported in the shell.
+- Vercel production verification: latest deployment `READY` at commit `03e60fe`; Neon Postgres reachable; 3 migrations found with none pending; `/api/proposals` returned `200` with a database-backed record; `/api/health` returned `404` because the new route is not deployed yet.
+- `npm run start -- --hostname 127.0.0.1 --port 3100`
+- `env DATABASE_URL= npm run dev -- --hostname 127.0.0.1 --port 3102`
+- `curl -sS -i http://127.0.0.1:3100/api/health`
+- `curl -sS -i http://127.0.0.1:3100/api/proposals`
+- `curl -sS -i http://127.0.0.1:3100/proposals`
+- `curl -sS -i http://127.0.0.1:3102/api/health`
+- `curl -sS -i http://127.0.0.1:3102/api/proposals`
 
 ## Remaining Bugs
 
-- Deployed-environment verification is still pending. This workspace does not have access to the live deployment, so the migration and smoke check with and without `DATABASE_URL` still need to be run against the real environment.
+- The health/no-fallback changes are not deployed yet; current production at commit `03e60fe` returns `404` for `/api/health`.
+- Local Prisma migration remains blocked until `DATABASE_URL` is exported to the shell. This is local-only; Vercel production successfully injects `DATABASE_URL` during `npm run build:vercel`.
+- Controlled production write/read/redeployment durability and application rollback drills are still pending.
 - PDF export still depends on Playwright Chromium being available in the runtime. The route now fails with an actionable message, but HTML export remains the only verified deployment-safe path.
 - If the OpenAI path returns weak but technically valid domain output, the sanitizer still focuses on removing website-only wording from non-website proposals rather than grading domain quality more deeply.
 
 ## Next Steps
 
-- Run `npm run prisma:migrate:deploy` in the deployment environment and then smoke-test proposal generation with `DATABASE_URL` enabled.
+- Commit and push the health/no-fallback changes, then verify Vercel deploys the new commit.
+- Verify production `/api/health` reports database mode, migrations ready, and `demoFallbackAllowed: false`.
+- Run a controlled write/read/redeployment durability drill, then complete an application rollback drill without reversing database migrations.
 - Decide whether the no-database deployed fallback should be supported at all. Local demo mode now uses a JSON-backed store, but truly durable deployed fallback storage would need a platform store such as Postgres, KV, Blob, or equivalent.
 - If PDF export is still required, replace the current browser-based path with a deployment-safe renderer or managed PDF service and keep HTML as the default escape hatch.
+
+## Roadmap Items
+
+- Tighten production/demo mode boundaries so a configured database never falls through to fixture records for list, detail, or export paths. Empty production accounts should render empty states, while local demo mode can keep seeded examples.
+- Add API error normalization for proposal status updates and export actions, including invalid status payloads, missing proposals, and failed export generation, so client UI can show actionable messages instead of generic failures.
+- Expand proposal flow tests to cover the database-backed path with Prisma, including manual seed creation, detail rendering, status updates, export upsert, and empty-account behavior.
+- Add an authenticated-user boundary before expanding beyond demo mode. Proposal, seed, and export queries already carry `userId`; the next slice should replace the hardcoded demo user with session-derived identity and verify cross-user isolation.
+- Decide the export product direction: keep HTML as the supported download format, or introduce a deployment-safe PDF service with explicit health checks and UI copy that reflects availability.

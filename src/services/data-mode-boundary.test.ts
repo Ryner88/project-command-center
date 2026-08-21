@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resetDemoStoreForTests } from "@/services/demo-store.service";
 
@@ -38,6 +38,10 @@ describe("data mode boundary", () => {
     await resetDemoStoreForTests();
   });
 
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("selects demo mode when the database is not ready", async () => {
     const { getDataMode } = await import("@/services/data-mode.service");
 
@@ -46,6 +50,14 @@ describe("data mode boundary", () => {
 
   it("selects database mode when the database is ready", async () => {
     mocks.isDatabaseReady.mockResolvedValue(true);
+
+    const { getDataMode } = await import("@/services/data-mode.service");
+
+    await expect(getDataMode()).resolves.toBe("database");
+  });
+
+  it("keeps production mode on the database path when readiness fails", async () => {
+    vi.stubEnv("NODE_ENV", "production");
 
     const { getDataMode } = await import("@/services/data-mode.service");
 

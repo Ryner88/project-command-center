@@ -27,7 +27,7 @@ async function checkDatabaseReady() {
 
     return Boolean(result[0]?.userTable);
   } catch (error) {
-    console.warn("Database configured but not ready, falling back to demo store.", error);
+    console.warn("Database configured but not ready.", error);
     return false;
   }
 }
