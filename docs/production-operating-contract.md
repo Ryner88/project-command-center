@@ -1,6 +1,6 @@
 # Production Operating Contract
 
-Last updated: 2026-08-14
+Last updated: 2026-08-21
 
 ## Target
 
@@ -78,17 +78,18 @@ Exit gate:
 
 ## Phase 1: Deployment Verification
 
-This remains the active PCC implementation task.
+This remains active only for the rollback drill.
 
-Status as of 2026-08-14:
+Status as of 2026-08-21:
 
 - Local automated gates pass: `npm test`, `npm run build`, and `npm run build:vercel`.
 - `/api/health` now reports deployment readiness from database configuration, migration readiness, and demo-fallback policy.
 - Production-like runtime blocks demo fallback when the configured database is unavailable.
 - Local development with no database remains an explicit demo mode.
 - Vercel production verification cleared the production database blocker: Neon Postgres is reachable, 3 migrations are present with none pending, and `/api/proposals` returns a database-backed record.
-- Current production remains on commit `03e60fe`, so `/api/health` is `404` until this health/no-fallback slice is deployed.
-- Phase 1 remains open until production health passes, a controlled write/read/redeployment durability drill succeeds, and application rollback is tested without reversing database migrations.
+- Current production deploys `/api/health` successfully with database mode, migrations ready, and `demoFallbackAllowed: false`.
+- Controlled production proposal `cmt3cs0xp0003ld04lk2q3owx` survived redeployment.
+- Phase 1 remains open only until application rollback is tested without reversing database migrations.
 
 Work:
 
@@ -110,8 +111,8 @@ Exit gate:
 Current blockers:
 
 - The local `npm run prisma:migrate:deploy` Prisma `P1012` is a local-shell configuration issue; Vercel successfully injects `DATABASE_URL` during `npm run build:vercel`.
-- The new `/api/health` route and no-fallback selector change are not deployed to production yet.
 - Rollback cannot be marked complete until an eligible prior deployment is exercised and migration compatibility is recorded.
+- GitHub issue #2 tracks the missing executable rollback path from this environment.
 
 ## Phase 2: Durable Persistence And Data Integrity
 

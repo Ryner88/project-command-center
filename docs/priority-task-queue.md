@@ -1,6 +1,6 @@
 # Priority Task Queue
 
-Last updated: 2026-08-14
+Last updated: 2026-08-21
 
 ## Completed Work
 
@@ -16,6 +16,8 @@ Last updated: 2026-08-14
 - Production-like runtime no longer falls back to seeded demo proposals when the configured database is unavailable.
 - Local development with no `DATABASE_URL` still reports explicit demo mode and serves JSON-backed demo records.
 - Vercel production verification cleared the production database blocker: Neon Postgres is reachable, migrations are current, and deployed `/api/proposals` returns a database-backed record.
+- Production `/api/health` is deployed and returns database mode with migrations ready and `demoFallbackAllowed: false`.
+- Controlled production proposal `cmt3cs0xp0003ld04lk2q3owx` survived a production redeployment.
 - The local Prisma `P1012` remains a local-shell configuration issue, not a Vercel production problem.
 
 ## This Week's Validation Rule
@@ -26,36 +28,31 @@ Last updated: 2026-08-14
 
 ## Next PCC Task
 
-Priority 1: deploy the health/no-fallback slice and finish controlled durability and rollback verification.
+Priority 1: complete the executable rollback drill.
 
 Why this is next:
 
 - The production operating contract is now tracked in `docs/production-operating-contract.md`; keep it current while implementation proceeds.
-- The Vercel build path passes, and production-like no-demo fallback behavior is now verified locally.
-- Current production remains on commit `03e60fe`, so `/api/health` is still `404` until the new health/no-fallback changes are committed, pushed, and deployed.
-- Vercel successfully injects `DATABASE_URL` during `npm run build:vercel`; production migrations found 3 migrations with none pending.
-- PCC still needs production proof that `/api/health` reports database mode, migrations ready, and `demoFallbackAllowed: false`, plus controlled write/read/redeployment durability and rollback drills.
-- Deployment verification remains the gate before promoting the proposal flow as production-ready.
+- The Vercel build path passes, and production no-demo fallback behavior is verified locally and in production health.
+- Vercel successfully injects `DATABASE_URL`; production migrations are current.
+- Production proof exists for `/api/health` and controlled write/read/redeployment durability.
+- Rollback remains the only incomplete Phase 1 gate item because the connected Vercel toolset did not expose rollback/promote and the local CLI had no credentials.
 
 Acceptance criteria:
 
-- Commit and push the health/no-fallback changes.
-- Vercel deploys the new commit successfully.
-- Production `/api/health` reports database mode, migration readiness, and `demoFallbackAllowed: false`.
-- A controlled write/read/redeployment durability drill confirms new records survive process and deployment replacement.
+- Commit and push the health/no-fallback changes. Done: `933902c`.
+- Vercel deploys the new commit successfully. Done: `dpl_J1yXYbSQKVuDgjjkRdok8VSiiA7s`.
+- Production `/api/health` reports database mode, migration readiness, and `demoFallbackAllowed: false`. Done.
+- A controlled write/read/redeployment durability drill confirms new records survive process and deployment replacement. Done: proposal `cmt3cs0xp0003ld04lk2q3owx` survived redeploy `dpl_AckauQtogfP45t1aYaSiBsYv3nYM`.
 - Application rollback to an eligible prior deployment is tested without reversing database migrations.
-- Any deployment-only failure is captured with the failing command, environment, and observed behavior.
+- Any deployment-only failure is captured with the failing command, environment, and observed behavior. Done: GitHub issue #2 tracks the rollback execution blocker.
 
 ## Execution Queue
 
-1. Commit and push the local health/no-fallback changes.
-2. Wait for Vercel to deploy the new commit.
-3. Verify production `/api/health` returns database mode, migrations ready, and `demoFallbackAllowed: false`.
-4. Run a controlled production write/read drill.
-5. Redeploy the app, then verify the controlled record survives.
-6. Test rollback from the deployed version to an eligible previous release without reversing database migrations.
-7. Verify proposal list, detail, status update, and HTML export paths remain database-backed only.
-8. Record deployment verification results and open follow-ups for any deployment-only gaps.
+1. Test rollback from the deployed version to an eligible previous release without reversing database migrations.
+2. Verify proposal `cmt3cs0xp0003ld04lk2q3owx` remains readable after rollback.
+3. Roll forward to the current health/no-fallback deployment.
+4. Verify production `/api/health` returns database mode, migrations ready, and `demoFallbackAllowed: false`.
 
 ## Deployment Verification Log: 2026-08-14
 
@@ -79,6 +76,19 @@ Acceptance criteria:
 - Runtime errors: none reported during the past 7 days.
 - Rollback: eligible prior deployments exist, but no live rollback was performed.
 - Status change: production database blocker is cleared; Phase 1 remains open until the health/no-fallback slice deploys, production health passes, a controlled write/read/redeployment durability drill succeeds, and application rollback is tested without reversing migrations.
+
+## Phase 1 Production Gate Update: 2026-08-21
+
+- Implementation commit: `933902c` (`Add production health gate`).
+- Redeploy trigger commit: `ac18996` (`Trigger Phase 1 redeploy verification`).
+- Production health deployment: `dpl_J1yXYbSQKVuDgjjkRdok8VSiiA7s`, `READY`.
+- Redeployment durability deployment: `dpl_AckauQtogfP45t1aYaSiBsYv3nYM`, `READY`.
+- `/api/health`: `200`, `status: "ok"`, `mode: "database"`, `databaseConfigured: true`, `databaseMigrated: true`, `demoFallbackAllowed: false`.
+- Controlled write: created proposal `cmt3cs0xp0003ld04lk2q3owx` through `/api/proposals/generate`.
+- Readback: `/api/proposals` returned the controlled proposal, and `/proposals/cmt3cs0xp0003ld04lk2q3owx` returned `200`.
+- Redeployment persistence: the same proposal remained readable after redeployment `dpl_AckauQtogfP45t1aYaSiBsYv3nYM`.
+- Runtime errors: none reported in Vercel for the last hour after verification.
+- Rollback: not executed from this environment because the connected Vercel toolset lacks rollback/promote and the local Vercel CLI has no credentials. Tracked in GitHub issue #2.
 
 ## Later
 

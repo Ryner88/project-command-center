@@ -19,10 +19,10 @@ Automated coverage now includes:
 
 Four-project deployment verification status:
 
-- Website project: domain generation remains covered; production-like no-demo fallback is verified locally, but production `/api/health` is still unavailable until the new route deploys.
-- Finance project: domain generation remains covered; production Neon Postgres is reachable and migrations are current, but a controlled write/read/redeployment durability drill is still pending.
+- Website project: domain generation remains covered; production `/api/health` is deployed and verifies database mode with no demo fallback.
+- Finance project: domain generation remains covered; production Neon Postgres is reachable, migrations are current, and the controlled write/read/redeployment durability drill passed.
 - School project: domain generation remains covered; local no-database demo mode still serves JSON-backed records only in development.
-- Medical project: domain generation remains covered; production readiness remains blocked until the health/no-fallback slice deploys and application rollback is tested without reversing migrations.
+- Medical project: domain generation remains covered; production readiness remains blocked only until application rollback is tested without reversing migrations.
 
 Commands used:
 
@@ -41,20 +41,21 @@ Commands used:
 - `curl -sS -i http://127.0.0.1:3100/proposals`
 - `curl -sS -i http://127.0.0.1:3102/api/health`
 - `curl -sS -i http://127.0.0.1:3102/api/proposals`
+- `curl -sS https://project-command-center-alpha.vercel.app/api/health`
+- `curl -sS -X POST https://project-command-center-alpha.vercel.app/api/proposals/generate ...`
+- `curl -sS https://project-command-center-alpha.vercel.app/api/proposals`
+- `curl -sS -I https://project-command-center-alpha.vercel.app/proposals/cmt3cs0xp0003ld04lk2q3owx`
 
 ## Remaining Bugs
 
-- The health/no-fallback changes are not deployed yet; current production at commit `03e60fe` returns `404` for `/api/health`.
 - Local Prisma migration remains blocked until `DATABASE_URL` is exported to the shell. This is local-only; Vercel production successfully injects `DATABASE_URL` during `npm run build:vercel`.
-- Controlled production write/read/redeployment durability and application rollback drills are still pending.
+- Application rollback drill is still pending because the connected Vercel toolset does not expose rollback/promote and the local Vercel CLI has no credentials. Tracked in GitHub issue #2.
 - PDF export still depends on Playwright Chromium being available in the runtime. The route now fails with an actionable message, but HTML export remains the only verified deployment-safe path.
 - If the OpenAI path returns weak but technically valid domain output, the sanitizer still focuses on removing website-only wording from non-website proposals rather than grading domain quality more deeply.
 
 ## Next Steps
 
-- Commit and push the health/no-fallback changes, then verify Vercel deploys the new commit.
-- Verify production `/api/health` reports database mode, migrations ready, and `demoFallbackAllowed: false`.
-- Run a controlled write/read/redeployment durability drill, then complete an application rollback drill without reversing database migrations.
+- Complete an application rollback drill without reversing database migrations.
 - Decide whether the no-database deployed fallback should be supported at all. Local demo mode now uses a JSON-backed store, but truly durable deployed fallback storage would need a platform store such as Postgres, KV, Blob, or equivalent.
 - If PDF export is still required, replace the current browser-based path with a deployment-safe renderer or managed PDF service and keep HTML as the default escape hatch.
 
