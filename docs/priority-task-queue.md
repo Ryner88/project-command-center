@@ -20,7 +20,7 @@ Last updated: 2026-08-27
 - Controlled production proposal `cmt3cs0xp0003ld04lk2q3owx` survived a production redeployment.
 - 2026-08-27 current production verification passes on deployment `dpl_DaHm2Y8xDBZPkKMqT4YTcC8yBHEm`.
 - Phase 1 rollback drill is complete: rollback to `dpl_ACEGU85muZczSezt5XBK3AxGxn1o`, health verification, controlled record survival, roll-forward to `dpl_DaHm2Y8xDBZPkKMqT4YTcC8yBHEm`, and final health verification all passed.
-- Phase 2 durable persistence design and analysis are documented in `docs/phase-2-durable-persistence-design.md`.
+- Phase 2 durable persistence design and analysis are documented in `docs/phase-2-durable-persistence-design.md`, including the required transaction ordering, owner-aware constraints, mandatory source-reference uniqueness, and real Postgres upgrade tests.
 - The local Prisma `P1012` remains a local-shell configuration issue, not a Vercel production problem.
 
 ## This Week's Validation Rule
@@ -40,7 +40,7 @@ Why this is next:
 - Vercel successfully injects `DATABASE_URL`; production migrations are current.
 - Production proof exists for `/api/health` and controlled write/read/redeployment durability.
 - Phase 1 is closed after the rollback and roll-forward drill passed without reversing database migrations.
-- Phase 2 design identifies repository boundaries, transaction requirements, indexes, archive/delete policy, migration tests, export/import shape, and backup/restore proof.
+- Phase 2 design identifies repository boundaries, transaction requirements, owner-consistency constraints, mandatory source-reference uniqueness, indexes, archive/delete policy, real Postgres migration tests, export/import shape, and backup/restore proof.
 
 Acceptance criteria:
 
@@ -54,10 +54,11 @@ Acceptance criteria:
 
 ## Execution Queue
 
-1. Start Phase 2 repository-boundary and durable persistence hardening.
-2. Define database constraints, delete/archive behavior, and transaction boundaries for implemented entities.
-3. Add migration tests against a clean database.
-4. Document backup/restore procedure and schedule the first tested restore drill.
+1. Start Phase 2 repository-boundary hardening with transaction-client-aware repository methods.
+2. Refactor proposal generation so AI generation happens outside database transactions, then persist seeds/proposals in one short transaction.
+3. Add owner-aware relationship constraints and mandatory partial uniqueness for non-null source references.
+4. Add real Postgres clean-migration, upgrade, rollback, stable-ID, and constraint rejection tests.
+5. Document backup/restore procedure and schedule the first tested restore drill.
 
 ## Deployment Verification Log: 2026-08-14
 
