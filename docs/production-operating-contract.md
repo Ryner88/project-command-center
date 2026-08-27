@@ -117,6 +117,8 @@ Current blockers:
 
 ## Phase 2: Durable Persistence And Data Integrity
 
+Design source: `docs/phase-2-durable-persistence-design.md`.
+
 Work:
 
 - Route all production reads and writes through one repository boundary.
