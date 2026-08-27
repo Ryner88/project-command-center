@@ -1,16 +1,16 @@
-# Phase 2 Durable Persistence And Data Integrity Design
+# Phase 2 durable persistence and data integrity
 
 Last updated: 2026-08-27
 
 ## Goal
 
-Phase 2 turns PCC persistence from "verified database-backed deployment" into a durable operating model. The target is not more UI surface area. The target is to make every implemented production record safe to create, read, update, export, migrate, back up, restore, and reason about.
+Phase 2 moves PCC from a verified database-backed deployment to a safer persistence model. This phase is not about adding more UI. It is about making every implemented production record safe to create, read, update, export, migrate, back up, restore, and inspect.
 
 Phase 2 is complete when production data integrity does not depend on developer memory, fixture behavior, or manual database inspection.
 
-## Current Analysis
+## Current analysis
 
-Phase 1 proved that production is using Postgres, migrations are current, demo fallback is blocked in production, and the controlled proposal survives redeploy and rollback. That is deployment proof, not full data-integrity proof. The current code still has several Phase 2-level risks:
+Phase 1 proved that production uses Postgres, migrations are current, demo fallback is blocked in production, and the controlled proposal survives redeploy and rollback. That proves deployment behavior. It does not prove full data integrity. The current code still has these Phase 2 risks:
 
 - Production services call Prisma directly in several places, which spreads ownership checks and query behavior across service modules.
 - Demo and production paths live in the same services, so the mode boundary is guarded by conditionals instead of a hard adapter boundary.
@@ -22,14 +22,14 @@ Phase 1 proved that production is using Postgres, migrations are current, demo f
 - JSON fields are mapped defensively to empty arrays, which is useful for UI resilience but can hide malformed persisted data. Integrity scanning belongs in a dedicated command or diagnostic endpoint, not in `/api/health`.
 - The schema has relationship constraints, but common owner-scoped list/status queries need explicit indexes before data volume grows.
 - Archive/delete behavior is not yet modeled, so future destructive UI work would be underspecified.
-- Migration testing is not yet a first-class command against real Postgres for clean installs, upgrades from the current three-migration schema, rollback behavior, and constraint rejection.
+- Migration testing is not yet a first-class command against real Postgres for clean installs, upgrades from the current three-migration schema, transaction rollback, and constraint rejection.
 - Backup/restore evidence does not yet prove app-level readability from a restored database.
 
-The highest leverage Phase 2 move is the repository boundary. Once ownership checks, Prisma query shapes, and transaction participation are centralized, constraints, migration tests, export/import, and restore drills become much easier to verify without changing every service at once.
+The first implementation step should be the repository boundary. Once ownership checks, Prisma query shapes, and transaction participation live in one place, constraints, migration tests, export/import, and restore drills are easier to verify without touching every service again.
 
 The main sequencing constraint is production compatibility. PCC already has production data, including proposal `cmt3cs0xp0003ld04lk2q3owx`; Phase 2 migrations must preserve existing IDs and records. Additive indexes and nullable archive fields are safe early migrations. Type conversions, especially string date fields to `DateTime`, should wait until data profiling and compatibility tests exist.
 
-## Current Production Surface
+## Current production surface
 
 Implemented durable entities:
 
@@ -52,14 +52,14 @@ Implemented production workflows:
 - Create and retrieve proposal exports.
 - Run Vercel deployment health checks against database configuration and migrations.
 
-Known non-goals for Phase 2:
+Non-goals for Phase 2:
 
 - Do not start the Phase 3 project/task UI before persistence boundaries are hardened.
 - Do not add public authentication scope here unless a persistence decision requires ownership fields to be prepared for it.
 - Do not reverse any production migration as part of validation.
 - Do not hold database transactions open while calling OpenAI or any other external AI/provider API.
 
-## Design Principles
+## Design principles
 
 - Production data access goes through repository-style modules with explicit ownership checks.
 - Demo storage remains isolated behind demo-only adapters and is never imported by production repositories.
@@ -71,9 +71,9 @@ Known non-goals for Phase 2:
 
 ## Workstreams
 
-### 1. Repository Boundary
+### 1. Repository boundary
 
-Create a durable data-access layer under `src/repositories/` or an equivalent local pattern:
+Create a data-access layer under `src/repositories/` or an equivalent local pattern:
 
 - `user.repository.ts`
 - `proposal-seed.repository.ts`
@@ -81,7 +81,7 @@ Create a durable data-access layer under `src/repositories/` or an equivalent lo
 - `export.repository.ts`
 - `briefing.repository.ts` only if Phase 2 adds briefing persistence; otherwise keep briefing persistence explicitly dormant.
 
-The services should orchestrate behavior; repositories should own Prisma query shapes, ownership filters, transaction participation, and record mapping. Repository write methods must accept a `Prisma.TransactionClient` or a shared transaction-scoped client type so services can compose atomic operations without repositories opening nested transactions.
+Services should orchestrate behavior. Repositories should own Prisma query shapes, ownership filters, transaction participation, and record mapping. Repository write methods must accept a `Prisma.TransactionClient` or a shared transaction-scoped client type so services can compose atomic operations without repositories opening nested transactions.
 
 Acceptance criteria:
 
@@ -90,7 +90,7 @@ Acceptance criteria:
 - Repository methods that participate in atomic workflows accept a transaction client.
 - Demo-mode reads and writes remain outside production repositories.
 
-### 2. Transaction Boundaries
+### 2. Transaction boundaries
 
 Make these operations atomic:
 
@@ -114,9 +114,9 @@ Acceptance criteria:
 - OpenAI or fallback AI generation is never executed inside an open database transaction.
 - Real Postgres tests prove transaction rollback behavior.
 
-### 3. Constraints And Indexes
+### 3. Constraints and indexes
 
-Add forward migrations for production query integrity and performance.
+Add forward migrations for query integrity and performance.
 
 Required owner-consistency constraints:
 
@@ -136,7 +136,7 @@ Required query indexes:
 - `Proposal`: index `(userId, status, createdAt)`.
 - `ProposalSeed`: index `(userId, createdAt)`.
 - `BriefingItem`: index `(userId, createdAt)` only if briefing persistence becomes active.
-- `Export`: keep unique `proposalId`; add index `(proposalId)` implicitly through uniqueness, and add owner/time indexes only if `Export.userId` remains.
+- `Export`: keep unique `proposalId`; add index `(proposalId)` implicitly through uniqueness. Add owner/time indexes only if `Export.userId` remains.
 
 Archive policy before adding fields:
 
@@ -162,7 +162,7 @@ Acceptance criteria:
 - Common list/detail/export queries have explicit indexes.
 - Archive/delete semantics are documented before any destructive mutation is exposed.
 
-### 4. Validation And Mapping
+### 4. Validation and mapping
 
 Centralize persistence validation at service boundaries:
 
@@ -178,7 +178,7 @@ Acceptance criteria:
 - Invalid status updates, missing records, and cross-user access return controlled application errors.
 - Export generation remains safe for stored user content.
 
-### 5. Migration Testing
+### 5. Migration testing
 
 Add a repeatable migration test path that does not depend on production and uses real Postgres:
 
@@ -197,7 +197,7 @@ Preferred command shape:
 npm run test:migrations
 ```
 
-The command can wrap Docker Postgres locally or use a temporary hosted test database if Docker is unavailable. Mocked Prisma transactions are acceptable for narrow service orchestration tests, but they do not satisfy Phase 2 migration or integrity proof.
+The command can wrap Docker Postgres locally or use a temporary hosted test database if Docker is unavailable. Mocked Prisma transactions are acceptable for narrow service orchestration tests, but they do not prove Phase 2 migration or integrity behavior.
 
 Acceptance criteria:
 
@@ -208,7 +208,7 @@ Acceptance criteria:
 - Cross-owner relationships and duplicate non-null source references are rejected by the database.
 - The test fails if migrations are pending, broken, or incompatible with the Prisma schema.
 
-### 6. Export And Import
+### 6. Export and import
 
 Design a portable JSON export format for owner-controlled backup and restore drills:
 
@@ -228,7 +228,7 @@ Acceptance criteria:
 - Import validates schema version and rejects malformed payloads.
 - Restored export paths are regenerated, not copied blindly from source data.
 
-### 7. Backup And Restore
+### 7. Backup and restore
 
 Define two backup layers:
 
@@ -250,7 +250,7 @@ Acceptance criteria:
 - Restore is tested without touching production data.
 - Restore evidence records source backup, target environment, commands, health result, and record IDs verified.
 
-## Implementation Order
+## Implementation order
 
 1. Create repository boundary and move Prisma calls behind it.
 2. Refactor proposal generation so input normalization and AI generation happen before writes; create manual seeds and proposals in one short transaction.
@@ -262,7 +262,7 @@ Acceptance criteria:
 8. Run backup/restore drill in non-production.
 9. Update the production operating contract with Phase 2 evidence and close Phase 2.
 
-## Exit Gate
+## Exit gate
 
 Phase 2 closes only when all of these are true:
 

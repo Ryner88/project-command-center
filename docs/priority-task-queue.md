@@ -20,7 +20,7 @@ Last updated: 2026-08-27
 - Controlled production proposal `cmt3cs0xp0003ld04lk2q3owx` survived a production redeployment.
 - 2026-08-27 current production verification passes on deployment `dpl_DaHm2Y8xDBZPkKMqT4YTcC8yBHEm`.
 - Phase 1 rollback drill is complete: rollback to `dpl_ACEGU85muZczSezt5XBK3AxGxn1o`, health verification, controlled record survival, roll-forward to `dpl_DaHm2Y8xDBZPkKMqT4YTcC8yBHEm`, and final health verification all passed.
-- Phase 2 durable persistence design and analysis are documented in `docs/phase-2-durable-persistence-design.md`, including the required transaction ordering, owner-aware constraints, mandatory source-reference uniqueness, and real Postgres upgrade tests.
+- Phase 2 durable persistence design and analysis are documented in `docs/phase-2-durable-persistence-design.md`. The design now calls for AI generation outside database transactions, owner-aware constraints, mandatory source-reference uniqueness, and real Postgres upgrade tests.
 - The local Prisma `P1012` remains a local-shell configuration issue, not a Vercel production problem.
 
 ## This Week's Validation Rule
@@ -40,7 +40,7 @@ Why this is next:
 - Vercel successfully injects `DATABASE_URL`; production migrations are current.
 - Production proof exists for `/api/health` and controlled write/read/redeployment durability.
 - Phase 1 is closed after the rollback and roll-forward drill passed without reversing database migrations.
-- Phase 2 design identifies repository boundaries, transaction requirements, owner-consistency constraints, mandatory source-reference uniqueness, indexes, archive/delete policy, real Postgres migration tests, export/import shape, and backup/restore proof.
+- Phase 2 design covers repository boundaries, transaction requirements, owner-consistency constraints, mandatory source-reference uniqueness, indexes, archive/delete policy, real Postgres migration tests, export/import shape, and backup/restore proof.
 
 Acceptance criteria:
 

@@ -117,7 +117,7 @@ Current blockers:
 
 ## Phase 2: Durable Persistence And Data Integrity
 
-Design source: `docs/phase-2-durable-persistence-design.md`.
+Design source: `docs/phase-2-durable-persistence-design.md`. The design keeps external AI calls outside database transactions and requires database-level owner consistency, mandatory source-reference uniqueness, and real Postgres migration tests.
 
 Work:
 
