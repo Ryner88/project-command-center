@@ -1,6 +1,6 @@
 # Priority Task Queue
 
-Last updated: 2026-08-21
+Last updated: 2026-08-27
 
 ## Completed Work
 
@@ -18,6 +18,7 @@ Last updated: 2026-08-21
 - Vercel production verification cleared the production database blocker: Neon Postgres is reachable, migrations are current, and deployed `/api/proposals` returns a database-backed record.
 - Production `/api/health` is deployed and returns database mode with migrations ready and `demoFallbackAllowed: false`.
 - Controlled production proposal `cmt3cs0xp0003ld04lk2q3owx` survived a production redeployment.
+- 2026-08-27 current production verification still passes on deployment `dpl_ACEGU85muZczSezt5XBK3AxGxn1o`.
 - The local Prisma `P1012` remains a local-shell configuration issue, not a Vercel production problem.
 
 ## This Week's Validation Rule
@@ -36,7 +37,7 @@ Why this is next:
 - The Vercel build path passes, and production no-demo fallback behavior is verified locally and in production health.
 - Vercel successfully injects `DATABASE_URL`; production migrations are current.
 - Production proof exists for `/api/health` and controlled write/read/redeployment durability.
-- Rollback remains the only incomplete Phase 1 gate item because the connected Vercel toolset did not expose rollback/promote and the local CLI had no credentials.
+- Rollback remains the only incomplete Phase 1 gate item because the connected Vercel app does not expose rollback/promote or alias control, and the local CLI still has no credentials.
 
 Acceptance criteria:
 
@@ -53,6 +54,7 @@ Acceptance criteria:
 2. Verify proposal `cmt3cs0xp0003ld04lk2q3owx` remains readable after rollback.
 3. Roll forward to the current health/no-fallback deployment.
 4. Verify production `/api/health` returns database mode, migrations ready, and `demoFallbackAllowed: false`.
+5. Close GitHub issue #2 and Phase 1 only after all four rollback-drill steps complete.
 
 ## Deployment Verification Log: 2026-08-14
 
@@ -89,6 +91,18 @@ Acceptance criteria:
 - Redeployment persistence: the same proposal remained readable after redeployment `dpl_AckauQtogfP45t1aYaSiBsYv3nYM`.
 - Runtime errors: none reported in Vercel for the last hour after verification.
 - Rollback: not executed from this environment because the connected Vercel toolset lacks rollback/promote and the local Vercel CLI has no credentials. Tracked in GitHub issue #2.
+
+## Phase 1 Rollback Attempt: 2026-08-27
+
+- Current production deployment: `dpl_ACEGU85muZczSezt5XBK3AxGxn1o`, `READY`, commit `e5ea5f2c1d39167870c2ef034c3d1a06360853ef` (`Record Phase 1 production verification`).
+- Rollback candidate visible in Vercel: `dpl_AckauQtogfP45t1aYaSiBsYv3nYM`, `READY`, commit `ac18996d4d57922995b0ae724def47ab5f4e22b2`.
+- Current health verification: `https://project-command-center-alpha.vercel.app/api/health` returned `200` with `status: "ok"`, `mode: "database"`, `databaseConfigured: true`, `databaseMigrated: true`, and `demoFallbackAllowed: false`.
+- Controlled record verification: `/api/proposals` returned proposal `cmt3cs0xp0003ld04lk2q3owx`, and `/proposals/cmt3cs0xp0003ld04lk2q3owx` returned `200`.
+- Rollback command attempted: `npx vercel rollback project-command-center-m9a32cejr-ryner88s-projects.vercel.app --yes`.
+- Result: rollback did not execute. Vercel CLI 59.7.0 reported no existing credentials and entered device-login flow with user code `XKSB-WJPV`; the pending login was cancelled.
+- Connected Vercel app limitation: deployment list/fetch and project deploy are available, but rollback/promote/alias mutation is not exposed.
+- Database migration handling: no Prisma rollback, migration reset, or destructive database command was run.
+- Phase 1 status: blocked, not closed. Issue #2 remains open until executable rollback and roll-forward access is available and the full drill completes.
 
 ## Later
 

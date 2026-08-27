@@ -1,6 +1,6 @@
 # Production Operating Contract
 
-Last updated: 2026-08-21
+Last updated: 2026-08-27
 
 ## Target
 
@@ -80,7 +80,7 @@ Exit gate:
 
 This remains active only for the rollback drill.
 
-Status as of 2026-08-21:
+Status as of 2026-08-27:
 
 - Local automated gates pass: `npm test`, `npm run build`, and `npm run build:vercel`.
 - `/api/health` now reports deployment readiness from database configuration, migration readiness, and demo-fallback policy.
@@ -89,7 +89,9 @@ Status as of 2026-08-21:
 - Vercel production verification cleared the production database blocker: Neon Postgres is reachable, 3 migrations are present with none pending, and `/api/proposals` returns a database-backed record.
 - Current production deploys `/api/health` successfully with database mode, migrations ready, and `demoFallbackAllowed: false`.
 - Controlled production proposal `cmt3cs0xp0003ld04lk2q3owx` survived redeployment.
-- Phase 1 remains open only until application rollback is tested without reversing database migrations.
+- Current production deployment `dpl_ACEGU85muZczSezt5XBK3AxGxn1o` is `READY` at commit `e5ea5f2c1d39167870c2ef034c3d1a06360853ef`.
+- Rollback candidate `dpl_AckauQtogfP45t1aYaSiBsYv3nYM` is available, but rollback execution is still blocked from this environment.
+- Phase 1 remains blocked until application rollback and roll-forward are executed without reversing database migrations.
 
 Work:
 
@@ -111,8 +113,8 @@ Exit gate:
 Current blockers:
 
 - The local `npm run prisma:migrate:deploy` Prisma `P1012` is a local-shell configuration issue; Vercel successfully injects `DATABASE_URL` during `npm run build:vercel`.
-- Rollback cannot be marked complete until an eligible prior deployment is exercised and migration compatibility is recorded.
-- GitHub issue #2 tracks the missing executable rollback path from this environment.
+- Rollback cannot be marked complete until an eligible prior deployment is exercised, migration compatibility is recorded, and the current deployment is restored.
+- GitHub issue #2 tracks the missing executable rollback path from this environment: the connected Vercel app exposes deployment listing/fetching and project deploy, but no rollback/promote or alias operation; local `npx vercel rollback project-command-center-m9a32cejr-ryner88s-projects.vercel.app --yes` on 2026-08-27 entered device login because no Vercel CLI credentials were available.
 
 ## Phase 2: Durable Persistence And Data Integrity
 

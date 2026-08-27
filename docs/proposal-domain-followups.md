@@ -49,7 +49,7 @@ Commands used:
 ## Remaining Bugs
 
 - Local Prisma migration remains blocked until `DATABASE_URL` is exported to the shell. This is local-only; Vercel production successfully injects `DATABASE_URL` during `npm run build:vercel`.
-- Application rollback drill is still pending because the connected Vercel toolset does not expose rollback/promote and the local Vercel CLI has no credentials. Tracked in GitHub issue #2.
+- Application rollback drill is still pending after a 2026-08-27 retry. The connected Vercel app exposes deployment list/fetch and project deploy, but no rollback/promote or alias mutation; local `npx vercel rollback project-command-center-m9a32cejr-ryner88s-projects.vercel.app --yes` entered device login because no Vercel CLI credentials were available. Tracked in GitHub issue #2.
 - PDF export still depends on Playwright Chromium being available in the runtime. The route now fails with an actionable message, but HTML export remains the only verified deployment-safe path.
 - If the OpenAI path returns weak but technically valid domain output, the sanitizer still focuses on removing website-only wording from non-website proposals rather than grading domain quality more deeply.
 
