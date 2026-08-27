@@ -49,13 +49,13 @@ Commands used:
 ## Remaining Bugs
 
 - Local Prisma migration remains blocked until `DATABASE_URL` is exported to the shell. This is local-only; Vercel production successfully injects `DATABASE_URL` during `npm run build:vercel`.
-- Application rollback drill is still pending after a 2026-08-27 retry. The connected Vercel app exposes deployment list/fetch and project deploy, but no rollback/promote or alias mutation; local `npx vercel rollback project-command-center-m9a32cejr-ryner88s-projects.vercel.app --yes` entered device login because no Vercel CLI credentials were available. Tracked in GitHub issue #2.
+- Application rollback drill passed on 2026-08-27 after CLI authentication became available: rollback to `dpl_ACEGU85muZczSezt5XBK3AxGxn1o`, health verification, controlled record survival, roll-forward to `dpl_DaHm2Y8xDBZPkKMqT4YTcC8yBHEm`, and final health verification all passed. GitHub issue #2 is closed.
 - PDF export still depends on Playwright Chromium being available in the runtime. The route now fails with an actionable message, but HTML export remains the only verified deployment-safe path.
 - If the OpenAI path returns weak but technically valid domain output, the sanitizer still focuses on removing website-only wording from non-website proposals rather than grading domain quality more deeply.
 
 ## Next Steps
 
-- Complete an application rollback drill without reversing database migrations.
+- Begin Phase 2 durable persistence and data integrity work.
 - Decide whether the no-database deployed fallback should be supported at all. Local demo mode now uses a JSON-backed store, but truly durable deployed fallback storage would need a platform store such as Postgres, KV, Blob, or equivalent.
 - If PDF export is still required, replace the current browser-based path with a deployment-safe renderer or managed PDF service and keep HTML as the default escape hatch.
 

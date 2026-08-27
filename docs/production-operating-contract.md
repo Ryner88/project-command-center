@@ -78,7 +78,7 @@ Exit gate:
 
 ## Phase 1: Deployment Verification
 
-This remains active only for the rollback drill.
+Phase 1 is closed.
 
 Status as of 2026-08-27:
 
@@ -89,9 +89,9 @@ Status as of 2026-08-27:
 - Vercel production verification cleared the production database blocker: Neon Postgres is reachable, 3 migrations are present with none pending, and `/api/proposals` returns a database-backed record.
 - Current production deploys `/api/health` successfully with database mode, migrations ready, and `demoFallbackAllowed: false`.
 - Controlled production proposal `cmt3cs0xp0003ld04lk2q3owx` survived redeployment.
-- Current production deployment `dpl_ACEGU85muZczSezt5XBK3AxGxn1o` is `READY` at commit `e5ea5f2c1d39167870c2ef034c3d1a06360853ef`.
-- Rollback candidate `dpl_AckauQtogfP45t1aYaSiBsYv3nYM` is available, but rollback execution is still blocked from this environment.
-- Phase 1 remains blocked until application rollback and roll-forward are executed without reversing database migrations.
+- Current production deployment `dpl_DaHm2Y8xDBZPkKMqT4YTcC8yBHEm` is `READY` at commit `4892f1d74f521ce17142afa4ab93986057386704`.
+- Rollback drill completed on 2026-08-27: production rolled back to `dpl_ACEGU85muZczSezt5XBK3AxGxn1o`, health passed, controlled database record `cmt3cs0xp0003ld04lk2q3owx` survived, production rolled forward to `dpl_DaHm2Y8xDBZPkKMqT4YTcC8yBHEm`, and health passed again.
+- No Prisma rollback, migration reset, or destructive database command was run during the rollback drill.
 
 Work:
 
@@ -113,8 +113,7 @@ Exit gate:
 Current blockers:
 
 - The local `npm run prisma:migrate:deploy` Prisma `P1012` is a local-shell configuration issue; Vercel successfully injects `DATABASE_URL` during `npm run build:vercel`.
-- Rollback cannot be marked complete until an eligible prior deployment is exercised, migration compatibility is recorded, and the current deployment is restored.
-- GitHub issue #2 tracks the missing executable rollback path from this environment: the connected Vercel app exposes deployment listing/fetching and project deploy, but no rollback/promote or alias operation; local `npx vercel rollback project-command-center-m9a32cejr-ryner88s-projects.vercel.app --yes` on 2026-08-27 entered device login because no Vercel CLI credentials were available.
+- No Phase 1 blocker remains. GitHub issue #2 was closed after the successful rollback and roll-forward drill.
 
 ## Phase 2: Durable Persistence And Data Integrity
 

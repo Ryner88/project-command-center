@@ -18,7 +18,8 @@ Last updated: 2026-08-27
 - Vercel production verification cleared the production database blocker: Neon Postgres is reachable, migrations are current, and deployed `/api/proposals` returns a database-backed record.
 - Production `/api/health` is deployed and returns database mode with migrations ready and `demoFallbackAllowed: false`.
 - Controlled production proposal `cmt3cs0xp0003ld04lk2q3owx` survived a production redeployment.
-- 2026-08-27 current production verification still passes on deployment `dpl_ACEGU85muZczSezt5XBK3AxGxn1o`.
+- 2026-08-27 current production verification passes on deployment `dpl_DaHm2Y8xDBZPkKMqT4YTcC8yBHEm`.
+- Phase 1 rollback drill is complete: rollback to `dpl_ACEGU85muZczSezt5XBK3AxGxn1o`, health verification, controlled record survival, roll-forward to `dpl_DaHm2Y8xDBZPkKMqT4YTcC8yBHEm`, and final health verification all passed.
 - The local Prisma `P1012` remains a local-shell configuration issue, not a Vercel production problem.
 
 ## This Week's Validation Rule
@@ -29,7 +30,7 @@ Last updated: 2026-08-27
 
 ## Next PCC Task
 
-Priority 1: complete the executable rollback drill.
+Priority 1: begin Phase 2 durable persistence and data integrity work.
 
 Why this is next:
 
@@ -37,7 +38,7 @@ Why this is next:
 - The Vercel build path passes, and production no-demo fallback behavior is verified locally and in production health.
 - Vercel successfully injects `DATABASE_URL`; production migrations are current.
 - Production proof exists for `/api/health` and controlled write/read/redeployment durability.
-- Rollback remains the only incomplete Phase 1 gate item because the connected Vercel app does not expose rollback/promote or alias control, and the local CLI still has no credentials.
+- Phase 1 is closed after the rollback and roll-forward drill passed without reversing database migrations.
 
 Acceptance criteria:
 
@@ -45,16 +46,16 @@ Acceptance criteria:
 - Vercel deploys the new commit successfully. Done: `dpl_J1yXYbSQKVuDgjjkRdok8VSiiA7s`.
 - Production `/api/health` reports database mode, migration readiness, and `demoFallbackAllowed: false`. Done.
 - A controlled write/read/redeployment durability drill confirms new records survive process and deployment replacement. Done: proposal `cmt3cs0xp0003ld04lk2q3owx` survived redeploy `dpl_AckauQtogfP45t1aYaSiBsYv3nYM`.
-- Application rollback to an eligible prior deployment is tested without reversing database migrations.
+- Application rollback to an eligible prior deployment is tested without reversing database migrations. Done: rollback to `dpl_ACEGU85muZczSezt5XBK3AxGxn1o`, then roll-forward to `dpl_DaHm2Y8xDBZPkKMqT4YTcC8yBHEm`.
 - Any deployment-only failure is captured with the failing command, environment, and observed behavior. Done: GitHub issue #2 tracks the rollback execution blocker.
+- GitHub issue #2 is closed after successful rollback proof. Done.
 
 ## Execution Queue
 
-1. Test rollback from the deployed version to an eligible previous release without reversing database migrations.
-2. Verify proposal `cmt3cs0xp0003ld04lk2q3owx` remains readable after rollback.
-3. Roll forward to the current health/no-fallback deployment.
-4. Verify production `/api/health` returns database mode, migrations ready, and `demoFallbackAllowed: false`.
-5. Close GitHub issue #2 and Phase 1 only after all four rollback-drill steps complete.
+1. Start Phase 2 repository-boundary and durable persistence hardening.
+2. Define database constraints, delete/archive behavior, and transaction boundaries for implemented entities.
+3. Add migration tests against a clean database.
+4. Document backup/restore procedure and schedule the first tested restore drill.
 
 ## Deployment Verification Log: 2026-08-14
 
@@ -102,7 +103,21 @@ Acceptance criteria:
 - Result: rollback did not execute. Vercel CLI 59.7.0 reported no existing credentials and entered device-login flow with user code `XKSB-WJPV`; the pending login was cancelled.
 - Connected Vercel app limitation: deployment list/fetch and project deploy are available, but rollback/promote/alias mutation is not exposed.
 - Database migration handling: no Prisma rollback, migration reset, or destructive database command was run.
-- Phase 1 status: blocked, not closed. Issue #2 remains open until executable rollback and roll-forward access is available and the full drill completes.
+- Phase 1 status at this point: blocked. This was superseded by the successful rollback drill later on 2026-08-27.
+
+## Phase 1 Rollback Drill Passed: 2026-08-27
+
+- Initial retry target: `npx vercel rollback project-command-center-m9a32cejr-ryner88s-projects.vercel.app --yes` authenticated successfully but failed with Vercel `402` because the target was farther back than the previous production deployment on the current plan.
+- Executed rollback command: `npx vercel rollback dpl_ACEGU85muZczSezt5XBK3AxGxn1o --yes --timeout 5m`.
+- Rollback result: production rolled back to `project-command-center-6w8fnl424-ryner88s-projects.vercel.app` (`dpl_ACEGU85muZczSezt5XBK3AxGxn1o`).
+- Rolled-back health verification: `https://project-command-center-alpha.vercel.app/api/health` returned `200` with `status: "ok"`, `mode: "database"`, `databaseConfigured: true`, `databaseMigrated: true`, and `demoFallbackAllowed: false`.
+- Rolled-back record verification: `/api/proposals` returned controlled proposal `cmt3cs0xp0003ld04lk2q3owx`, and `/proposals/cmt3cs0xp0003ld04lk2q3owx` returned `200`.
+- Executed roll-forward command: `npx vercel rollback dpl_DaHm2Y8xDBZPkKMqT4YTcC8yBHEm --yes --timeout 5m`.
+- Roll-forward result: production restored to `project-command-center-e0ozoi759-ryner88s-projects.vercel.app` (`dpl_DaHm2Y8xDBZPkKMqT4YTcC8yBHEm`).
+- Final health verification: `/api/health` returned `200` with database mode, migrations ready, and `demoFallbackAllowed: false`.
+- Final record verification: controlled proposal `cmt3cs0xp0003ld04lk2q3owx` remained readable after roll-forward.
+- Database migration handling: no Prisma rollback, migration reset, or destructive database command was run.
+- Phase 1 status: closed. GitHub issue #2 closed.
 
 ## Later
 
