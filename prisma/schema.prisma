@@ -68,8 +68,11 @@ model ProposalSeed {
   context         Json
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
+  archivedAt      DateTime?
   user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   proposals       Proposal[]
+  @@unique([userId, id])
+  @@index([userId, createdAt])
 }
 
 model Proposal {
@@ -95,9 +98,13 @@ model Proposal {
   sourceLabel    String?
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+  archivedAt     DateTime?
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   proposalSeed   ProposalSeed?  @relation(fields: [proposalSeedId], references: [id], onDelete: SetNull)
   exports        Export[]
+  @@unique([userId, id])
+  @@index([userId, createdAt])
+  @@index([userId, status, createdAt])
 }
 
 model Export {
@@ -111,4 +118,5 @@ model Export {
   updatedAt  DateTime @updatedAt
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  @@index([userId, createdAt])
 }

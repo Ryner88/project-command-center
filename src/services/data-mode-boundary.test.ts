@@ -72,7 +72,7 @@ describe("data mode boundary", () => {
 
     await expect(listProposals()).resolves.toEqual([]);
     expect(mocks.prisma.proposal.findMany).toHaveBeenCalledWith({
-      where: { userId: "user_test" },
+      where: { userId: "user_test", archivedAt: null },
       orderBy: { createdAt: "desc" }
     });
   });

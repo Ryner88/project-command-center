@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { exports } from "@/repositories/persistence.repository";
 import { getDataMode, isDatabaseMode } from "@/services/data-mode.service";
 import { readDemoStore, writeDemoStore } from "@/services/demo-store.service";
 import { ensureCurrentUser } from "@/services/current-user.service";
@@ -7,15 +7,9 @@ import type { ProposalExport } from "@/types/export";
 export async function listExportsForProposal(proposalId: string) {
   if (isDatabaseMode(await getDataMode())) {
     const user = await ensureCurrentUser();
-    const exports = await prisma.export.findMany({
-      where: {
-        proposalId,
-        userId: user.id
-      },
-      orderBy: { createdAt: "desc" }
-    });
+    const records = await exports.list(user.id, proposalId);
 
-    return exports.map((item) => ({
+    return records.map((item) => ({
       ...item,
       createdAt: item.createdAt.toISOString()
     }));
@@ -30,23 +24,7 @@ export async function upsertProposalExport(
 ) {
   if (isDatabaseMode(await getDataMode())) {
     const user = await ensureCurrentUser();
-    const exportRecord = await prisma.export.upsert({
-      where: {
-        proposalId: proposalExport.proposalId
-      },
-      update: {
-        fileName: proposalExport.fileName,
-        filePath: proposalExport.filePath,
-        mimeType: proposalExport.mimeType
-      },
-      create: {
-        userId: user.id,
-        proposalId: proposalExport.proposalId,
-        fileName: proposalExport.fileName,
-        filePath: proposalExport.filePath,
-        mimeType: proposalExport.mimeType
-      }
-    });
+    const exportRecord = await exports.upsert(user.id, proposalExport);
 
     return {
       ...exportRecord,
