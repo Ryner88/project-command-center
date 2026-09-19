@@ -4,12 +4,14 @@ import { ZodError } from "zod";
 import { getErrorPayload } from "@/lib/app-error";
 import { proposalGenerationSchema } from "@/schemas/proposal";
 import { generateProposal } from "@/services/proposal.service";
+import { recordOwnerMutation } from "@/services/audit.service";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const input = proposalGenerationSchema.parse(body);
     const proposal = await generateProposal(input);
+    await recordOwnerMutation({ action: "proposal.generated", entityType: "proposal", entityId: proposal.id, requestId: request.headers.get("x-request-id") });
 
     return NextResponse.json({ data: proposal }, { status: 201 });
   } catch (error) {

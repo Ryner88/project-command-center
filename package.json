@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "node scripts/with-next-lock.mjs next dev",
-    "build": "node scripts/with-next-lock.mjs next build",
+    "build": "node scripts/with-next-lock.mjs next build --webpack",
     "build:vercel": "node scripts/vercel-build.mjs",
     "start": "next start",
     "lint": "next lint",
@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "test:migrations": "node scripts/test-migrations.mjs",
     "test:e2e:phase3": "node scripts/test-phase3-e2e.mjs",
+    "test:e2e:phase4": "node scripts/test-phase4-security.mjs",
     "data:export": "node scripts/portable-data.mjs export",
     "data:import": "node scripts/portable-data.mjs import",
     "postinstall": "prisma generate",
@@ -22,12 +23,12 @@
   "dependencies": {
     "@prisma/client": "^6.6.0",
     "@sparticuz/chromium": "^147.0.2",
-    "next": "^15.3.0",
+    "next": "^16.3.5",
     "openai": "^5.20.2",
     "playwright": "^1.59.1",
     "playwright-core": "^1.59.1",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -36,8 +37,8 @@
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^22.14.0",
-    "@types/react": "^19.1.1",
-    "@types/react-dom": "^19.1.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.0.1",
     "jsdom": "^29.0.2",
     "postcss": "^8.5.3",

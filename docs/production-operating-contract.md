@@ -28,9 +28,9 @@ flowchart TD
 
 ## Operating Decisions
 
-- Initial production target: single-user, local-first operation.
-- Exposure model: private by default. Authentication remains unnecessary only when access is local or otherwise private.
-- Public writable deployment rule: if PCC is reachable by the public internet and allows mutations, owner authentication and session protection are required before launch.
+- Initial production target: a single-owner workspace.
+- Exposure model: private and authenticated. Production requires the owner password and session secret even when it runs on a private network.
+- Public writable deployment rule: serve the application over HTTPS so its secure owner session cookie remains protected in transit.
 - Production data source: persistent database only.
 - Demo data source: isolated demo store only.
 - Test and development modes may use fixtures, mocks, or local stores, but those paths must not be reachable from production mode.
@@ -166,6 +166,19 @@ Exit gate:
 - No core workflow depends on a fixture or hardcoded success response.
 
 ## Phase 4: Access And Security Boundary
+
+Implementation branch: `phase-4-access-security`.
+
+Verification completed on 2026-09-19 against a fresh PostgreSQL database:
+
+- Anonymous page requests redirect to sign-in, and anonymous API requests return `401`.
+- Incorrect passwords fail without creating a session. Correct passwords create a signed, HTTP-only, same-site session.
+- Cross-origin mutations return `403` before reaching an application route.
+- Security headers block framing, outside scripts, and unnecessary browser permissions.
+- Project creation writes an owner-scoped audit event, and sign-out removes access.
+- The dependency scan reports zero vulnerabilities.
+- The six-migration clean install and upgrade test passes against PostgreSQL.
+- Unit tests, the standalone type check, the production build, and the browser security test pass.
 
 Work:
 

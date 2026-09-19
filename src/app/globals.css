@@ -37,6 +37,10 @@ a {
   text-decoration: none;
 }
 
+.nav-button { border: 0; background: transparent; color: inherit; cursor: pointer; padding: 0; }
+.login-shell { min-height: 75vh; display: grid; place-items: center; }
+.login-card { width: min(100%, 520px); }
+
 button,
 input,
 textarea,

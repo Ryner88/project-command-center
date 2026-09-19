@@ -15,7 +15,7 @@ export const users = {
     return Boolean(rows[0]?.userTable);
   },
   ensure: (id: string, email: string, name: string) => prisma.user.upsert({
-    where: { id }, update: { email, name }, create: { id, email, name }
+    where: { email }, update: { name }, create: { id, email, name }
   })
 };
 
@@ -98,4 +98,9 @@ export const tasks = {
     return tx.task.create({data:{...data,userId,projectId}});
   }),
   update: (userId:string,id:string,data:Prisma.TaskUpdateManyMutationInput) => prisma.task.updateManyAndReturn({where:{userId,id},data})
+};
+
+export const auditEvents = {
+  create: (userId: string, data: { action: string; entityType: string; entityId?: string; requestId?: string; metadata?: Prisma.InputJsonObject }) =>
+    prisma.auditEvent.create({ data: { ...data, userId } })
 };

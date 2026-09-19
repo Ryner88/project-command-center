@@ -24,15 +24,8 @@ export function getErrorPayload(
     };
   }
 
-  if (error instanceof Error) {
-    return {
-      status: 500,
-      body: { error: error.message || fallbackMessage }
-    };
+  if (process.env.NODE_ENV !== "production" && error instanceof Error) {
+    console.error(fallbackMessage, error);
   }
-
-  return {
-    status: 500,
-    body: { error: fallbackMessage }
-  };
+  return { status: 500, body: { error: fallbackMessage } };
 }
