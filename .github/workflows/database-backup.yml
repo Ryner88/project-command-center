@@ -27,7 +27,7 @@ jobs:
       - name: Check dump archive
         run: docker run --rm -v "$PWD:/backup" postgres:17 pg_restore --list /backup/pcc.dump > /dev/null
       - name: Upload backup
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pcc-postgres-${{ github.run_id }}
           path: pcc.dump
