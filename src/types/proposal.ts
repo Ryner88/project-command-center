@@ -5,6 +5,7 @@ export type ProposalStatus = "DRAFT" | "IN_REVIEW" | "SENT" | "WON" | "LOST";
 export type Proposal = {
   id: string;
   proposalSeedId?: string;
+  projectId?: string;
   title: string;
   clientName: string;
   projectType?: string;
@@ -25,6 +26,7 @@ export type Proposal = {
 };
 
 export type ProposalGenerationInput = {
+  projectId?: string;
   proposalSeedId?: string;
   title?: string;
   clientName?: string;

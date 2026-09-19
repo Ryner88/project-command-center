@@ -4,6 +4,7 @@ import {
   ensureProposalSeedForBriefingItem,
   getProposalSeedById
 } from "@/services/proposal-seed.service";
+import { getProject } from "@/services/project.service";
 
 export const dynamic = "force-dynamic";
 
@@ -11,15 +12,17 @@ type NewProposalPageProps = {
   searchParams: Promise<{
     seedId?: string;
     briefingItemId?: string;
+    projectId?: string;
   }>;
 };
 
 export default async function NewProposalPage({ searchParams }: NewProposalPageProps) {
-  const { seedId, briefingItemId } = await searchParams;
+  const { seedId, briefingItemId, projectId } = await searchParams;
+  const project = projectId ? await getProject(projectId) : null;
   const seed =
     (seedId ? await getProposalSeedById(seedId) : null) ??
     (briefingItemId ? await ensureProposalSeedForBriefingItem(briefingItemId) : null);
-  const title = seed?.clientName
+  const title = project ? `${project.clientName} ${project.name} Proposal` : seed?.clientName
     ? `${seed.clientName} ${seed.projectType ?? "Project"} Proposal`
     : `${seed?.projectType ?? "Project"} Proposal`;
 
@@ -85,15 +88,16 @@ export default async function NewProposalPage({ searchParams }: NewProposalPageP
             </p>
           </div>
           <ProposalGeneratorForm
-            initialClientName={seed?.clientName ?? ""}
-            initialStartDate=""
-            initialDueDate=""
+            projectId={project?.id}
+            initialClientName={project?.clientName ?? seed?.clientName ?? ""}
+            initialStartDate={project?.startDate ?? ""}
+            initialDueDate={project?.dueDate ?? ""}
             initialProjectDomain={seed?.projectDomain}
             initialProjectDomainOther={seed?.projectDomainOther}
-            initialProjectType={seed?.projectType ?? ""}
-            initialSummary={seed?.summary ?? ""}
+            initialProjectType={project?.name ?? seed?.projectType ?? ""}
+            initialSummary={project?.description ?? seed?.summary ?? ""}
             initialTitle={title}
-            initialRawRequest={seed?.summary ?? ""}
+            initialRawRequest={project?.description ?? seed?.summary ?? ""}
             proposalSeedId={seed?.id}
           />
         </article>

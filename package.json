@@ -11,6 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:migrations": "node scripts/test-migrations.mjs",
+    "test:e2e:phase3": "node scripts/test-phase3-e2e.mjs",
     "data:export": "node scripts/portable-data.mjs export",
     "data:import": "node scripts/portable-data.mjs import",
     "postinstall": "prisma generate",

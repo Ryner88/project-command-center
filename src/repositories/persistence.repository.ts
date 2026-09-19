@@ -56,7 +56,14 @@ export const proposals = {
   create: (userId: string, data: Omit<Prisma.ProposalUncheckedCreateInput, "userId">, db: Client) =>
     db.proposal.create({ data: { ...data, userId } }),
   updateStatus: (userId: string, id: string, status: ProposalStatus) =>
-    prisma.proposal.updateManyAndReturn({ where: { id, userId }, data: { status } })
+    prisma.proposal.updateManyAndReturn({ where: { id, userId }, data: { status } }),
+  edit: (userId:string,id:string,data:Prisma.ProposalUpdateInput) => transaction(async tx=>{
+    const current=await tx.proposal.findFirst({where:{id,userId}}); if(!current) return null;
+    const last=await tx.proposalVersion.aggregate({where:{proposalId:id},_max:{version:true}});
+    await tx.proposalVersion.create({data:{userId,proposalId:id,version:(last._max.version??0)+1,snapshot:current as unknown as Prisma.InputJsonObject}});
+    return tx.proposal.update({where:{id},data});
+  }),
+  versions: (userId:string,id:string)=>prisma.proposalVersion.findMany({where:{userId,proposalId:id},orderBy:{version:"desc"}})
 };
 
 export const exports = {
@@ -74,4 +81,21 @@ export const exports = {
         create: { ...data, userId }
       });
     })
+};
+
+export const projects = {
+  list: (userId:string, archived=false) => prisma.project.findMany({
+    where:{ userId, archivedAt: archived ? { not:null } : null }, include:{ tasks:{ where:{ archivedAt:null }, orderBy:[{ completedAt:"asc" },{ position:"asc" }] }, _count:{ select:{ proposals:true } } }, orderBy:[{ priority:"desc" },{ updatedAt:"desc" }]
+  }),
+  get: (userId:string,id:string,db:Client=prisma) => db.project.findFirst({ where:{userId,id}, include:{ tasks:{ where:{archivedAt:null},orderBy:[{completedAt:"asc"},{position:"asc"}] }, _count:{select:{proposals:true}} } }),
+  create: (userId:string,data:Prisma.ProjectUncheckedCreateWithoutUserInput) => prisma.project.create({data:{...data,userId}}),
+  update: (userId:string,id:string,data:Prisma.ProjectUpdateManyMutationInput) => prisma.project.updateManyAndReturn({where:{userId,id},data}),
+};
+
+export const tasks = {
+  create: async (userId:string,projectId:string,data:Omit<Prisma.TaskUncheckedCreateInput,"userId"|"projectId">) => transaction(async tx => {
+    if (!await tx.project.findFirst({where:{id:projectId,userId,archivedAt:null}})) throw new AppError(404,"Project was not found.");
+    return tx.task.create({data:{...data,userId,projectId}});
+  }),
+  update: (userId:string,id:string,data:Prisma.TaskUpdateManyMutationInput) => prisma.task.updateManyAndReturn({where:{userId,id},data})
 };

@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { formatProposalDate } from "@/lib/date";
 import { getProposalDomainLabel } from "@/lib/proposal-domain";
 import { listExportsForProposal } from "@/services/export.service";
+import { ProposalEditor } from "@/components/proposals/proposal-editor";
+import { listProposalVersions } from "@/services/proposal.service";
 import { getProposalById } from "@/services/proposal.service";
 
 type ProposalDetailPageProps = {
@@ -21,6 +23,7 @@ export default async function ProposalDetailPage({
   }
 
   const exports = await listExportsForProposal(proposal.id);
+  const versions = await listProposalVersions(proposal.id);
 
   return (
     <main className="stack">
@@ -132,6 +135,7 @@ export default async function ProposalDetailPage({
           </div>
         ) : null}
       </section>
+      <ProposalEditor proposal={proposal} versions={versions}/>
     </main>
   );
 }

@@ -704,3 +704,6 @@ select {
     display: grid;
   }
 }
+
+.task-done { text-decoration: line-through; color: var(--muted); }
+.error-text { color: var(--danger); font-weight: 700; }

@@ -11,6 +11,7 @@ import { validateProposalDeadline } from "@/lib/proposal-schedule";
 
 type ProposalGeneratorFormProps = {
   proposalSeedId?: string;
+  projectId?: string;
   initialTitle: string;
   initialClientName: string;
   initialStartDate?: string;
@@ -29,6 +30,7 @@ type ApiErrorResponse = {
 
 export function ProposalGeneratorForm({
   proposalSeedId,
+  projectId,
   initialTitle,
   initialClientName,
   initialStartDate = "",
@@ -60,6 +62,7 @@ export function ProposalGeneratorForm({
   function buildPayload() {
     return {
       proposalSeedId: proposalSeedId || undefined,
+      projectId: projectId || undefined,
       title: readOptionalField(title),
       clientName: readOptionalField(clientName),
       startDate: readOptionalField(startDate),

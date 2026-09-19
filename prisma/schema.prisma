@@ -31,6 +31,20 @@ enum ProposalDomain {
   OTHER
 }
 
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+enum WorkPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
 model User {
   id            String         @id @default(cuid())
   email         String         @unique
@@ -41,6 +55,9 @@ model User {
   proposalSeeds ProposalSeed[]
   proposals     Proposal[]
   exports       Export[]
+  projects      Project[]
+  tasks         Task[]
+  proposalVersions ProposalVersion[]
 }
 
 model BriefingItem {
@@ -79,6 +96,7 @@ model Proposal {
   id             String         @id @default(cuid())
   userId         String
   proposalSeedId String?
+  projectId      String?
   title          String
   clientName     String
   projectType    String?
@@ -101,10 +119,63 @@ model Proposal {
   archivedAt     DateTime?
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   proposalSeed   ProposalSeed?  @relation(fields: [proposalSeedId], references: [id], onDelete: SetNull)
+  project        Project?       @relation(fields: [userId, projectId], references: [userId, id], onDelete: SetNull)
   exports        Export[]
+  versions       ProposalVersion[]
   @@unique([userId, id])
   @@index([userId, createdAt])
   @@index([userId, status, createdAt])
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  userId      String
+  name        String
+  clientName  String
+  description String
+  status      ProjectStatus @default(PLANNING)
+  priority    WorkPriority  @default(MEDIUM)
+  startDate   String?
+  dueDate     String?
+  archivedAt  DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  proposals   Proposal[]
+  tasks       Task[]
+  @@unique([userId, id])
+  @@index([userId, archivedAt, priority, updatedAt])
+  @@index([userId, status, updatedAt])
+}
+
+model Task {
+  id          String       @id @default(cuid())
+  userId      String
+  projectId   String
+  title       String
+  description String?
+  priority    WorkPriority @default(MEDIUM)
+  position    Int          @default(0)
+  completedAt DateTime?
+  archivedAt  DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project     Project      @relation(fields: [userId, projectId], references: [userId, id], onDelete: Cascade)
+  @@index([userId, projectId, completedAt, position])
+}
+
+model ProposalVersion {
+  id         String   @id @default(cuid())
+  userId     String
+  proposalId String
+  version    Int
+  snapshot   Json
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  proposal   Proposal @relation(fields: [userId, proposalId], references: [userId, id], onDelete: Cascade)
+  @@unique([proposalId, version])
+  @@index([userId, proposalId, createdAt])
 }
 
 model Export {

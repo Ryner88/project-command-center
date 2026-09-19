@@ -1,6 +1,6 @@
 # Production Operating Contract
 
-Last updated: 2026-08-27
+Last updated: 2026-09-19
 
 ## Target
 
@@ -137,6 +137,17 @@ Exit gate:
 - A backup can be restored and verified.
 
 ## Phase 3: Complete Real Workflows
+
+Implementation branch: `phase-3-complete-real-workflows`.
+
+Verification completed on 2026-09-19 against a clean PostgreSQL database:
+
+- Created, edited, prioritized, filtered, searched, archived, and recovered projects through the UI.
+- Created, ordered, completed, and reopened project tasks.
+- Generated a proposal from saved project context and preserved the project relationship.
+- Edited the saved proposal, created version history, reopened the detail page, and downloaded the HTML export.
+- The scripted browser test covers the project, task, proposal, version, export, search, and archive path.
+- The five-migration clean install and upgrade test passes against PostgreSQL.
 
 Work:
 
