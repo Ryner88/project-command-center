@@ -3,12 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getErrorPayload } from "@/lib/app-error";
 import { createProposalExport } from "@/services/export-document.service";
 import { recordOwnerMutation } from "@/services/audit.service";
+import { observedRoute } from "@/lib/observability";
 
 type ExportRouteProps = {
   params: Promise<{ id: string }>;
 };
 
-export async function POST(_request: NextRequest, { params }: ExportRouteProps) {
+export const POST = observedRoute<[ExportRouteProps]>("proposals.export_html", async (_request: NextRequest, { params }: ExportRouteProps) => {
   try {
     const { id } = await params;
     const result = await createProposalExport(id);
@@ -19,4 +20,4 @@ export async function POST(_request: NextRequest, { params }: ExportRouteProps) 
     const payload = getErrorPayload(error, "Proposal export failed.");
     return NextResponse.json(payload.body, { status: payload.status });
   }
-}
+});

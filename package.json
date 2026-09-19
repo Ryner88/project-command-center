@@ -13,6 +13,7 @@
     "test:migrations": "node scripts/test-migrations.mjs",
     "test:e2e:phase3": "node scripts/test-phase3-e2e.mjs",
     "test:e2e:phase4": "node scripts/test-phase4-security.mjs",
+    "test:e2e:phase5": "node scripts/test-phase5-reliability.mjs",
     "data:export": "node scripts/portable-data.mjs export",
     "data:import": "node scripts/portable-data.mjs import",
     "postinstall": "prisma generate",

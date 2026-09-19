@@ -199,6 +199,18 @@ Exit gate:
 
 ## Phase 5: Reliability And Operations
 
+Implementation branch: `phase-5-reliability-operations`.
+
+Verification completed on 2026-09-19 with a disposable PostgreSQL database:
+
+- Correlated JSON logs record request IDs, operation IDs, status codes, and durations without request bodies or client content.
+- Liveness stayed available while PostgreSQL was stopped, readiness returned `503`, and database-backed work failed with a safe response and request ID.
+- Readiness and database-backed work recovered after PostgreSQL restarted without restarting the application.
+- Malformed project input returned `400` and the diagnostics endpoint reported uptime, build, readiness, and the last failed operation.
+- A deliberately failed migration transaction left no partial table behind.
+- A custom-format backup restored into a clean database with matching user, project, and audit-event counts.
+- The manual browser test created and reopened a real recovery-drill project, then verified authenticated diagnostics.
+
 Work:
 
 - Add structured logs with request and operation identifiers.

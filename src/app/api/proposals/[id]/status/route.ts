@@ -4,12 +4,13 @@ import { proposalStatusSchema } from "@/schemas/proposal";
 import { updateProposalStatus } from "@/services/proposal.service";
 import { recordOwnerMutation } from "@/services/audit.service";
 import { getErrorPayload } from "@/lib/app-error";
+import { observedRoute } from "@/lib/observability";
 
 type StatusRouteProps = {
   params: Promise<{ id: string }>;
 };
 
-export async function PATCH(request: NextRequest, { params }: StatusRouteProps) {
+export const PATCH = observedRoute<[StatusRouteProps]>("proposals.status", async (request: NextRequest, { params }: StatusRouteProps) => {
   try {
     const input = proposalStatusSchema.parse(await request.json());
     const { id } = await params;
@@ -20,4 +21,4 @@ export async function PATCH(request: NextRequest, { params }: StatusRouteProps) 
     const payload = getErrorPayload(error, "Proposal status could not be updated.");
     return NextResponse.json(payload.body, { status: payload.status });
   }
-}
+});

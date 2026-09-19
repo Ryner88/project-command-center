@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 
 import { getErrorPayload } from "@/lib/app-error";
 import { getProposalExportDocument } from "@/services/export-document.service";
+import { observedRoute } from "@/lib/observability";
+import type { NextRequest } from "next/server";
 
 type ExportDownloadRouteProps = {
   params: Promise<{ id: string }>;
 };
 
-export async function GET(_request: Request, { params }: ExportDownloadRouteProps) {
+export const GET = observedRoute<[ExportDownloadRouteProps]>("proposals.download_html", async (_request: NextRequest, { params }: ExportDownloadRouteProps) => {
   try {
     const { id } = await params;
     const document = await getProposalExportDocument(id);
@@ -23,4 +25,4 @@ export async function GET(_request: Request, { params }: ExportDownloadRouteProp
     const payload = getErrorPayload(error, "Proposal export download failed.");
     return NextResponse.json(payload.body, { status: payload.status });
   }
-}
+});

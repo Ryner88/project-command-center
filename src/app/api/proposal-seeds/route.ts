@@ -4,13 +4,14 @@ import { proposalSeedSchema } from "@/schemas/proposal-seed";
 import { createProposalSeed, listProposalSeeds } from "@/services/proposal-seed.service";
 import { recordOwnerMutation } from "@/services/audit.service";
 import { getErrorPayload } from "@/lib/app-error";
+import { observedRoute } from "@/lib/observability";
 
-export async function GET() {
+export const GET = observedRoute("proposal_seeds.list", async () => {
   const seeds = await listProposalSeeds();
   return NextResponse.json({ data: seeds });
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = observedRoute("proposal_seeds.create", async (request: NextRequest) => {
   try {
     const input = proposalSeedSchema.parse(await request.json());
     const seed = await createProposalSeed(input);
@@ -20,4 +21,4 @@ export async function POST(request: NextRequest) {
     const payload = getErrorPayload(error, "Proposal source could not be created.");
     return NextResponse.json(payload.body, { status: payload.status });
   }
-}
+});
