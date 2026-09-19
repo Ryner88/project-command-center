@@ -1,12 +1,13 @@
 # Priority Task Queue
 
-Last updated: 2026-08-27
+Last updated: 2026-09-19
 
 ## Completed Work
 
 - Phase 2 persistence work is implemented on `phase-2-durable-persistence`: production data access uses one repository boundary, proposal and export writes are transactional, and owner consistency plus source-reference uniqueness are enforced by PostgreSQL.
 - Real PostgreSQL tests cover clean migration, upgrade from the original three migrations, stable IDs, owner constraints, source-reference uniqueness, and transaction rollback.
 - Portable JSON export/import and daily PostgreSQL backups are implemented. Both restore paths were tested on 2026-09-18 through app health, proposal detail, and HTML export reads.
+- Phase 2 production rollout completed on 2026-09-19: backup configuration and artifacts were verified, production data was profiled and repaired, the constraint migration was applied, deployment and manual route checks passed, and a production portable export restored successfully.
 - Proposal generation now supports domain-aware drafts for website, finance, school, medical, and custom project types.
 - Manual proposal submit now persists through the generate route, local demo storage, redirect, and saved detail render.
 - Demo-mode proposal persistence now survives a module reload before the detail view is rendered.
@@ -34,7 +35,7 @@ Last updated: 2026-08-27
 
 ## Next PCC Task
 
-Priority 1: review and merge Phase 2 durable persistence, then configure the `BACKUP_DATABASE_URL` GitHub Actions secret before enabling scheduled backup runs.
+Priority 1: review and merge the verified Phase 2 branch.
 
 Why this is next:
 
@@ -57,9 +58,9 @@ Acceptance criteria:
 
 ## Execution Queue
 
-1. Review the Phase 2 migration preflight against a current production data profile before deployment.
-2. Configure `BACKUP_DATABASE_URL` in GitHub Actions and run the backup workflow manually once.
-3. Deploy Phase 2 through the normal Vercel migration path and verify the controlled production proposal.
+1. Review and merge `phase-2-durable-persistence`.
+2. Confirm the next scheduled backup completes under the daily schedule.
+3. Begin the next planned product phase only after the Phase 2 merge is recorded.
 
 ## Deployment Verification Log: 2026-08-14
 
