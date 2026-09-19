@@ -1,8 +1,9 @@
 import { mockImportantEmails } from "@/data/mock-emails";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { inferProposalDomain } from "@/lib/proposal-domain";
+import { AppError } from "@/lib/app-error";
 import { DEMO_USER_ID } from "@/lib/constants";
-import { prisma } from "@/lib/prisma";
+import { seeds } from "@/repositories/persistence.repository";
 import { getDataMode, isDatabaseMode } from "@/services/data-mode.service";
 import { readDemoStore, writeDemoStore } from "@/services/demo-store.service";
 import { ensureCurrentUser } from "@/services/current-user.service";
@@ -11,12 +12,7 @@ import type { ProposalSeedInput, ProposalSeed } from "@/types/proposal-seed";
 export async function listProposalSeeds(): Promise<ProposalSeed[]> {
   if (isDatabaseMode(await getDataMode())) {
     const user = await ensureCurrentUser();
-    const seeds = await prisma.proposalSeed.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" }
-    });
-
-    return seeds.map(mapProposalSeedRecord);
+    return (await seeds.list(user.id)).map(mapProposalSeedRecord);
   }
 
   const store = await readDemoStore();
@@ -26,27 +22,15 @@ export async function listProposalSeeds(): Promise<ProposalSeed[]> {
 export async function createProposalSeed(input: ProposalSeedInput): Promise<ProposalSeed> {
   if (isDatabaseMode(await getDataMode())) {
     const user = await ensureCurrentUser();
-    const seed = await prisma.proposalSeed.create({
-      data: {
-        userId: user.id,
-        sourceType: input.sourceType,
-        sourceReference: input.sourceReference,
-        clientName: input.clientName,
-        projectType: input.projectType,
-        projectDomain: input.projectDomain,
-        projectDomainOther: input.projectDomainOther,
-        summary: input.summary,
-        context: {
-          ...(input.context ?? {}),
-          ...(input.projectDomain ? { projectDomain: input.projectDomain } : {}),
-          ...(input.projectDomainOther
-            ? { projectDomainOther: input.projectDomainOther }
-            : {})
-        } as Prisma.InputJsonObject
+    try {
+      return mapProposalSeedRecord(await seeds.create(user.id, input));
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002" && input.sourceReference) {
+        const existing = await seeds.bySource(user.id, input.sourceType, input.sourceReference);
+        if (existing) return mapProposalSeedRecord(existing);
       }
-    });
-
-    return mapProposalSeedRecord(seed);
+      throw error;
+    }
   }
 
   const store = await readDemoStore();
@@ -65,10 +49,7 @@ export async function createProposalSeed(input: ProposalSeedInput): Promise<Prop
 export async function getSampleProposalSeed(): Promise<ProposalSeed> {
   if (isDatabaseMode(await getDataMode())) {
     const user = await ensureCurrentUser();
-    const existing = await prisma.proposalSeed.findFirst({
-      where: { userId: user.id },
-      orderBy: { createdAt: "asc" }
-    });
+    const existing = await seeds.first(user.id);
 
     if (existing) {
       return mapProposalSeedRecord(existing);
@@ -95,12 +76,7 @@ export async function getSampleProposalSeed(): Promise<ProposalSeed> {
 export async function getProposalSeedById(id: string): Promise<ProposalSeed | null> {
   if (isDatabaseMode(await getDataMode())) {
     const user = await ensureCurrentUser();
-    const seed = await prisma.proposalSeed.findFirst({
-      where: {
-        id,
-        userId: user.id
-      }
-    });
+    const seed = await seeds.get(user.id, id);
 
     return seed ? mapProposalSeedRecord(seed) : null;
   }
@@ -114,12 +90,7 @@ export async function ensureProposalSeedForBriefingItem(
 ): Promise<ProposalSeed | null> {
   if (isDatabaseMode(await getDataMode())) {
     const user = await ensureCurrentUser();
-    const existingSeed = await prisma.proposalSeed.findFirst({
-      where: {
-        sourceReference: briefingItemId,
-        userId: user.id
-      }
-    });
+    const existingSeed = await seeds.bySource(user.id, "BRIEFING", briefingItemId);
 
     if (existingSeed) {
       return mapProposalSeedRecord(existingSeed);
@@ -173,10 +144,10 @@ function mapProposalSeedRecord(seed: {
   summary: string;
   context: unknown;
 }): ProposalSeed {
-  const context =
-    seed.context && typeof seed.context === "object" && !Array.isArray(seed.context)
-      ? (seed.context as Record<string, unknown>)
-      : {};
+  if (!seed.context || typeof seed.context !== "object" || Array.isArray(seed.context)) {
+    throw new AppError(500, "Persisted proposal seed has invalid context data.");
+  }
+  const context = seed.context as Record<string, unknown>;
 
   return {
     id: seed.id,

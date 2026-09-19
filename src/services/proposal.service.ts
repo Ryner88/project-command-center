@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { proposals, seeds, transaction } from "@/repositories/persistence.repository";
 import { AppError } from "@/lib/app-error";
 import { isValidDateInput } from "@/lib/date";
 import { validateProposalDeadline } from "@/lib/proposal-schedule";
@@ -15,21 +15,13 @@ import {
 import type { ProposalStatus } from "@/types/proposal";
 import type { ProposalGenerationInput, Proposal } from "@/types/proposal";
 
-import {
-  createProposalSeed,
-  getProposalSeedById
-} from "@/services/proposal-seed.service";
+import { createProposalSeed, getProposalSeedById } from "@/services/proposal-seed.service";
 import { generateProposalDraft } from "@/services/ai/proposal-ai.service";
 
 export async function listProposals(): Promise<Proposal[]> {
   if (isDatabaseMode(await getDataMode())) {
     const user = await ensureCurrentUser();
-    const proposals = await prisma.proposal.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" }
-    });
-
-    return proposals.map(mapProposalRecord);
+    return (await proposals.list(user.id)).map(mapProposalRecord);
   }
 
   const store = await readDemoStore();
@@ -77,10 +69,23 @@ export async function generateProposal(input: ProposalGenerationInput): Promise<
 
   if (databaseReady) {
     const user = await ensureCurrentUser();
-    const created = await prisma.proposal.create({
-      data: {
-        userId: user.id,
-        proposalSeedId: proposal.proposalSeedId,
+    const created = await transaction(async (tx) => {
+      let proposalSeedId = proposal.proposalSeedId;
+      if (proposalSeedId) {
+        if (!await seeds.get(user.id, proposalSeedId, tx)) {
+          throw new AppError(404, `Proposal seed ${proposalSeedId} was not found.`);
+        }
+      } else {
+        const seed = await seeds.create(user.id, {
+          sourceType: "MANUAL", clientName: normalized.clientName,
+          projectType: normalized.projectType, projectDomain: normalized.projectDomain,
+          projectDomainOther: normalized.projectDomainOther, summary: normalized.summary,
+          context: normalized.rawRequest ? { rawRequest: normalized.rawRequest } : {}
+        }, tx);
+        proposalSeedId = seed.id;
+      }
+      return proposals.create(user.id, {
+        proposalSeedId,
         title: proposal.title,
         clientName: proposal.clientName,
         projectType: proposal.projectType,
@@ -98,15 +103,22 @@ export async function generateProposal(input: ProposalGenerationInput): Promise<
         assumptions: proposal.assumptions,
         priceRange: proposal.priceRange,
         sourceLabel: proposal.sourceLabel
-      }
+      }, tx);
     });
 
     return mapProposalRecord(created);
   }
 
+  const demoSeed = normalized.sourceSeed ?? await createProposalSeed({
+    sourceType: "MANUAL", clientName: normalized.clientName,
+    projectType: normalized.projectType, projectDomain: normalized.projectDomain,
+    projectDomainOther: normalized.projectDomainOther, summary: normalized.summary,
+    context: normalized.rawRequest ? { rawRequest: normalized.rawRequest } : {}
+  });
   const store = await readDemoStore();
   const demoProposal = {
     ...proposal,
+    proposalSeedId: demoSeed.id,
     id: `proposal_${store.proposals.length + 1}`
   };
   store.proposals.push(demoProposal);
@@ -178,6 +190,7 @@ async function normalizeProposalGenerationInput(input: ProposalGenerationInput) 
     return {
       proposalSeedId: sourceSeed.id,
       sourceSeed,
+      rawRequest,
       title,
       clientName,
       startDate,
@@ -189,19 +202,10 @@ async function normalizeProposalGenerationInput(input: ProposalGenerationInput) 
     };
   }
 
-  const manualSeed = await createProposalSeed({
-    sourceType: "MANUAL",
-    clientName,
-    projectType,
-    projectDomain,
-    projectDomainOther,
-    summary,
-    context: rawRequest ? { rawRequest } : {}
-  });
-
   return {
-    proposalSeedId: manualSeed.id,
-    sourceSeed: manualSeed,
+    proposalSeedId: undefined,
+    sourceSeed: null,
+    rawRequest,
     title,
     clientName,
     startDate,
@@ -216,12 +220,7 @@ async function normalizeProposalGenerationInput(input: ProposalGenerationInput) 
 export async function getProposalById(id: string): Promise<Proposal | null> {
   if (isDatabaseMode(await getDataMode())) {
     const user = await ensureCurrentUser();
-    const proposal = await prisma.proposal.findFirst({
-      where: {
-        id,
-        userId: user.id
-      }
-    });
+    const proposal = await proposals.get(user.id, id);
 
     return proposal ? mapProposalRecord(proposal) : null;
   }
@@ -236,13 +235,7 @@ export async function updateProposalStatus(
 ): Promise<Proposal | null> {
   if (isDatabaseMode(await getDataMode())) {
     const user = await ensureCurrentUser();
-    const proposal = await prisma.proposal.updateManyAndReturn({
-      where: {
-        id,
-        userId: user.id
-      },
-      data: { status }
-    });
+    const proposal = await proposals.updateStatus(user.id, id, status);
 
     return proposal[0] ? mapProposalRecord(proposal[0]) : null;
   }
@@ -304,9 +297,10 @@ function mapProposalRecord(record: {
 }
 
 function readStringArray(value: unknown) {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === "string")
-    : [];
+  if (!Array.isArray(value) || !value.every((item) => typeof item === "string")) {
+    throw new AppError(500, "Persisted proposal contains invalid array data.");
+  }
+  return value as string[];
 }
 
 function cleanText(value?: string) {

@@ -4,6 +4,9 @@ Last updated: 2026-08-27
 
 ## Completed Work
 
+- Phase 2 persistence work is implemented on `phase-2-durable-persistence`: production data access uses one repository boundary, proposal and export writes are transactional, and owner consistency plus source-reference uniqueness are enforced by PostgreSQL.
+- Real PostgreSQL tests cover clean migration, upgrade from the original three migrations, stable IDs, owner constraints, source-reference uniqueness, and transaction rollback.
+- Portable JSON export/import and daily PostgreSQL backups are implemented. Both restore paths were tested on 2026-09-18 through app health, proposal detail, and HTML export reads.
 - Proposal generation now supports domain-aware drafts for website, finance, school, medical, and custom project types.
 - Manual proposal submit now persists through the generate route, local demo storage, redirect, and saved detail render.
 - Demo-mode proposal persistence now survives a module reload before the detail view is rendered.
@@ -31,7 +34,7 @@ Last updated: 2026-08-27
 
 ## Next PCC Task
 
-Priority 1: begin Phase 2 durable persistence and data integrity work.
+Priority 1: review and merge Phase 2 durable persistence, then configure the `BACKUP_DATABASE_URL` GitHub Actions secret before enabling scheduled backup runs.
 
 Why this is next:
 
@@ -54,11 +57,9 @@ Acceptance criteria:
 
 ## Execution Queue
 
-1. Start Phase 2 repository-boundary hardening with transaction-client-aware repository methods.
-2. Refactor proposal generation so AI generation happens outside database transactions, then persist seeds/proposals in one short transaction.
-3. Add owner-aware relationship constraints and mandatory partial uniqueness for non-null source references.
-4. Add real Postgres clean-migration, upgrade, rollback, stable-ID, and constraint rejection tests.
-5. Document backup/restore procedure and schedule the first tested restore drill.
+1. Review the Phase 2 migration preflight against a current production data profile before deployment.
+2. Configure `BACKUP_DATABASE_URL` in GitHub Actions and run the backup workflow manually once.
+3. Deploy Phase 2 through the normal Vercel migration path and verify the controlled production proposal.
 
 ## Deployment Verification Log: 2026-08-14
 
