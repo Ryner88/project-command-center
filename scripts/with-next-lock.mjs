@@ -1,5 +1,7 @@
-import { mkdir, rm } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
+import { tmpdir } from "node:os";
 import path from "node:path";
 
 const [command, ...args] = process.argv.slice(2);
@@ -8,16 +10,27 @@ if (!command) {
   process.exit(2);
 }
 
-const lockPath = path.resolve(".next.lock");
-try {
-  await mkdir(lockPath);
-} catch (error) {
-  if (error?.code === "EEXIST") {
-    console.error("Another Next.js dev server or build is using this checkout. Stop it or use a separate checkout.");
-    process.exit(73);
+const checkoutKey = createHash("sha256").update(process.cwd()).digest("hex").slice(0, 16);
+const lockPath = path.join(tmpdir(), `pcc-next-${checkoutKey}.lock`);
+async function acquireLock() {
+  try {
+    await mkdir(lockPath);
+    await writeFile(path.join(lockPath, "pid"), String(process.pid));
+  } catch (error) {
+    if (error?.code !== "EEXIST") throw error;
+    const ownerPid = Number(await readFile(path.join(lockPath, "pid"), "utf8").catch(() => "0"));
+    try {
+      if (!Number.isInteger(ownerPid) || ownerPid <= 0) throw new Error("stale lock");
+      process.kill(ownerPid, 0);
+      console.error("Another Next.js dev server or build is using this checkout. Stop it or use a separate checkout.");
+      process.exit(73);
+    } catch {
+      await rm(lockPath, { recursive: true, force: true });
+      await acquireLock();
+    }
   }
-  throw error;
 }
+await acquireLock();
 
 let child;
 const cleanup = async () => rm(lockPath, { recursive: true, force: true });
@@ -31,8 +44,8 @@ try {
     child.once("error", reject);
     child.once("exit", (code, signal) => resolve({ code, signal }));
   });
-  if (exit.signal) process.kill(process.pid, exit.signal);
-  process.exitCode = exit.code ?? 1;
+  const signalExitCodes = { SIGINT: 130, SIGTERM: 143 };
+  process.exitCode = exit.code ?? signalExitCodes[exit.signal] ?? 1;
 } finally {
   await cleanup();
 }
