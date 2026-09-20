@@ -15,8 +15,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
+        <a className="skip-link" href="#main-content">
+          Skip to main content
+        </a>
         <div className="shell">
-          <nav className="nav">
+          <nav className="nav" aria-label="Primary navigation">
             <Link href="/">Home</Link>
             <Link href="/briefing">Briefing</Link>
             <Link href={"/projects" as never}>Projects</Link>
@@ -25,7 +28,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <LogoutButton />
           </nav>
           <WorkflowProgress />
-          {children}
+          <div id="main-content" tabIndex={-1}>
+            {children}
+          </div>
         </div>
       </body>
     </html>

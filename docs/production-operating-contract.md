@@ -14,7 +14,7 @@ Fully operational means:
 - Deployment, migration, backup, restore, rollback, and monitoring are verified.
 - The application is secure for its chosen exposure model.
 - Demo mode remains available but is isolated, labeled, and resettable.
-- Recruiters can see documented production evidence, not only screenshots.
+- Recruiters can review documented production evidence alongside screenshots.
 
 ```mermaid
 flowchart TD
@@ -258,6 +258,18 @@ Exit gate:
 - The previous working release can be restored.
 
 ## Phase 7: Production UX And Portfolio Evidence
+
+Implementation branch: `phase-7-production-ux-portfolio`.
+
+Verification completed on 2026-09-20 in an isolated local demo workspace:
+
+- Home, project, and populated proposal pages passed the automated WCAG A and AA scan with no serious or critical violations.
+- Keyboard, 390-pixel mobile layout, and reduced-motion behavior were checked.
+- Three final warm proposal reloads had a 2,171 ms median load time against a 3-second target.
+- The workspace opened empty and loaded sample records only after the explicit demo action.
+- Manual testing covered the empty dashboard, demo loading, populated dashboard, and saved proposal detail.
+- Portfolio evidence includes desktop and mobile screenshots plus a short WebM workflow recording.
+- README now covers setup, architecture, configuration, modes, testing, operations, and the release flow.
 
 Work:
 

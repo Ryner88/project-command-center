@@ -59,7 +59,12 @@ export function WorkflowProgress() {
                   : "upcoming";
 
           return (
-            <Link className={`workflow-step workflow-${state}`} href={step.href} key={step.label}>
+            <Link
+              aria-current={state === "active" ? "step" : undefined}
+              className={`workflow-step workflow-${state}`}
+              href={step.href}
+              key={step.label}
+            >
               <span className="workflow-index">{index + 1}</span>
               <span>{step.label}</span>
             </Link>

@@ -103,6 +103,7 @@ export function ProposalCardActions({ proposalId, currentStatus }: ProposalCardA
       </div>
       <div className="inline-form">
         <select
+          aria-label="Proposal status"
           name="status"
           onChange={(event) => setStatus(event.target.value as ProposalStatus)}
           value={status}

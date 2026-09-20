@@ -6,11 +6,16 @@ import { recordOwnerMutation } from "@/services/audit.service";
 import { observedRoute } from "@/lib/observability";
 type C = { params: Promise<{ id: string }> };
 export const GET = observedRoute<[C]>("projects.read", async (_: NextRequest, c: C) => {
-  const { id } = await c.params;
-  const p = await getProject(id);
-  return p
-    ? NextResponse.json({ data: p })
-    : NextResponse.json({ error: "Project was not found." }, { status: 404 });
+  try {
+    const { id } = await c.params;
+    const p = await getProject(id);
+    return p
+      ? NextResponse.json({ data: p })
+      : NextResponse.json({ error: "Project was not found." }, { status: 404 });
+  } catch (error) {
+    const payload = getErrorPayload(error, "Project is unavailable.");
+    return NextResponse.json(payload.body, { status: payload.status });
+  }
 });
 export const PATCH = observedRoute<[C]>("projects.update", async (r: NextRequest, c: C) => {
   try {

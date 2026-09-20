@@ -1,5 +1,7 @@
 import { projects, tasks } from "@/repositories/persistence.repository";
+import { AppError } from "@/lib/app-error";
 import { ensureCurrentUser } from "@/services/current-user.service";
+import { getDataMode } from "@/services/data-mode.service";
 import type { z } from "zod";
 import type {
   projectInputSchema,
@@ -9,15 +11,18 @@ import type {
 } from "@/schemas/project";
 
 export async function listProjects(archived = false) {
+  await requireProjectDatabase();
   const u = await ensureCurrentUser();
   return (await projects.list(u.id, archived)).map(mapProject);
 }
 export async function getProject(id: string) {
+  await requireProjectDatabase();
   const u = await ensureCurrentUser();
   const p = await projects.get(u.id, id);
   return p ? mapProject(p) : null;
 }
 export async function createProject(input: z.infer<typeof projectInputSchema>) {
+  await requireProjectDatabase();
   const u = await ensureCurrentUser();
   return projects.create(u.id, {
     ...input,
@@ -26,6 +31,7 @@ export async function createProject(input: z.infer<typeof projectInputSchema>) {
   });
 }
 export async function updateProject(id: string, input: z.infer<typeof projectUpdateSchema>) {
+  await requireProjectDatabase();
   const u = await ensureCurrentUser();
   const { archived, ...data } = input;
   return (
@@ -38,10 +44,12 @@ export async function updateProject(id: string, input: z.infer<typeof projectUpd
   );
 }
 export async function createTask(projectId: string, input: z.infer<typeof taskInputSchema>) {
+  await requireProjectDatabase();
   const u = await ensureCurrentUser();
   return tasks.create(u.id, projectId, { ...input, description: input.description || null });
 }
 export async function updateTask(id: string, input: z.infer<typeof taskUpdateSchema>) {
+  await requireProjectDatabase();
   const u = await ensureCurrentUser();
   const { completed, ...data } = input;
   return (
@@ -52,6 +60,12 @@ export async function updateTask(id: string, input: z.infer<typeof taskUpdateSch
       })
     )[0] ?? null
   );
+}
+
+async function requireProjectDatabase() {
+  if ((await getDataMode()) !== "database") {
+    throw new AppError(503, "Project workflows require a configured database.");
+  }
 }
 type ProjectRecord = NonNullable<Awaited<ReturnType<typeof projects.get>>>;
 

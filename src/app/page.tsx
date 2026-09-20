@@ -1,6 +1,11 @@
 import Link from "next/link";
+import { LoadDemoWorkspaceButton } from "@/components/demo/load-demo-workspace-button";
+import { getDataMode } from "@/services/data-mode.service";
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const mode = await getDataMode();
   return (
     <main className="home stack">
       <section className="home-hero">
@@ -22,6 +27,15 @@ export default function HomePage() {
               Dashboard
             </Link>
           </div>
+          {mode === "demo" ? (
+            <div className="demo-callout stack" aria-label="Demo workspace controls">
+              <strong>Demo mode is empty until you choose to load sample work.</strong>
+              <p>
+                Sample records stay in this local demo workspace and are never loaded in production.
+              </p>
+              <LoadDemoWorkspaceButton />
+            </div>
+          ) : null}
         </div>
 
         <aside className="workflow-card" aria-label="Recommended workflow">
@@ -61,9 +75,9 @@ export default function HomePage() {
           <p>Production proposals are stored in Postgres.</p>
         </article>
         <article className="proof-card">
-          <span className="proof-value">Mock</span>
-          <strong>Demo inputs</strong>
-          <p>Briefing data works without Gmail or Calendar OAuth.</p>
+          <span className="proof-value">Explicit</span>
+          <strong>Demo workspace</strong>
+          <p>Sample proposal data loads only when you request it outside production.</p>
         </article>
       </section>
     </main>

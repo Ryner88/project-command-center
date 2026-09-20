@@ -307,11 +307,20 @@ export default async function ProposalsPage({ searchParams }: ProposalsPageProps
             </div>
           ))}
           {filteredCards.length === 0 ? (
-            <div className="card">
-              <strong>No proposals match the current filters.</strong>
+            <div className="empty-state">
+              <strong>
+                {proposalCards.length
+                  ? "No proposals match the current filters"
+                  : "No proposals yet"}
+              </strong>
               <p className="muted">
-                Clear the filters or create a new proposal to repopulate the dashboard.
+                {proposalCards.length
+                  ? "Clear or change the filters to see more proposals."
+                  : "Create the first proposal from project context, briefing context, or direct input."}
               </p>
+              <Link className="cta" href="/proposals/new">
+                Create the first proposal
+              </Link>
             </div>
           ) : null}
         </div>

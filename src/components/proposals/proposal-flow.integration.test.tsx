@@ -7,7 +7,7 @@ import userEvent from "@testing-library/user-event";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { resetDemoStoreForTests } from "@/services/demo-store.service";
+import { loadDemoWorkspace, resetDemoStoreForTests } from "@/services/demo-store.service";
 
 const push = vi.fn();
 const refresh = vi.fn();
@@ -84,7 +84,7 @@ describe("proposal generation flow", () => {
     await userEvent.click(screen.getByRole("button", { name: "Generate proposal" }));
 
     await waitFor(() => {
-      expect(push).toHaveBeenCalledWith("/proposals/proposal_2");
+      expect(push).toHaveBeenCalledWith("/proposals/proposal_1");
     });
 
     vi.resetModules();
@@ -92,7 +92,7 @@ describe("proposal generation flow", () => {
     const { default: ProposalDetailPage } = await import("@/app/proposals/[id]/page");
 
     const page = await ProposalDetailPage({
-      params: Promise.resolve({ id: "proposal_2" })
+      params: Promise.resolve({ id: "proposal_1" })
     });
     const html = renderToStaticMarkup(page);
 
@@ -136,6 +136,7 @@ describe("proposal generation flow", () => {
   });
 
   it("renders the default demo proposal detail by stable id", async () => {
+    await loadDemoWorkspace();
     const { default: ProposalDetailPage } = await import("@/app/proposals/[id]/page");
 
     const page = await ProposalDetailPage({

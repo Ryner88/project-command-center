@@ -111,6 +111,7 @@ jobs:
       - run: npm run test:e2e:phase5
         env:
           EXPECT_READINESS: ready
+      - run: npm run test:e2e:phase7
       - name: Show server log after failure
         if: failure()
         run: tail -n 200 /tmp/pcc-e2e.log
