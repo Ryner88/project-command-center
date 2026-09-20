@@ -60,7 +60,19 @@ export function observedRoute<TArgs extends unknown[]>(
     };
     write("info", { event: "operation.started", ...context, startedAt: undefined });
     try {
-      const response = await handler(request, ...args);
+      let response = await handler(request, ...args);
+      if (
+        response.status >= 500 &&
+        response.headers.get("content-type")?.includes("application/json")
+      ) {
+        const body = (await response.clone().json()) as unknown;
+        if (body && typeof body === "object" && !("requestId" in body)) {
+          response = NextResponse.json(
+            { ...body, requestId: context.requestId },
+            { status: response.status, headers: response.headers }
+          );
+        }
+      }
       const current = state();
       if (response.status >= 500) {
         current.failed += 1;

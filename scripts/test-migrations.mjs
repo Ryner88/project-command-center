@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { execFileSync } from "node:child_process";
-import { cp, mkdtemp, mkdir, rm } from "node:fs/promises";
+import { cp, mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import assert from "node:assert/strict";
@@ -132,6 +132,30 @@ try {
     })
   );
   assert.equal(await db.proposalSeed.count({ where: { id: "rolled_back_seed" } }), 0);
+  for (const name of [
+    "20260918120000_durable_integrity",
+    "20260919110000_complete_workflows",
+    "20260919150000_access_security"
+  ]) {
+    await cp(path.join("prisma/migrations", name), path.join(root, "migrations", name), {
+      recursive: true
+    });
+  }
+  const failedMigration = path.join(root, "migrations", "20260920170000_deliberate_failure");
+  await mkdir(failedMigration);
+  await writeFile(
+    path.join(failedMigration, "migration.sql"),
+    `BEGIN;
+CREATE TABLE "MigrationRollbackSentinel" (id text PRIMARY KEY);
+SELECT deliberately_missing_migration_function();
+COMMIT;
+`
+  );
+  assert.throws(() => run(["migrate", "deploy", "--schema", path.join(root, "schema.prisma")]));
+  const [sentinel] = await db.$queryRawUnsafe(
+    `SELECT to_regclass('public."MigrationRollbackSentinel"')::text AS relation`
+  );
+  assert.equal(sentinel.relation, null);
   // Exercise every model through the generated client.
   await Promise.all([
     db.user.count(),
