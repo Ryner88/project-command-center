@@ -32,4 +32,6 @@ try {
     assert.ok(body.requestId);
   }
   console.log(`Phase 5 ${expected} reliability checks passed`);
-} finally { await api.dispose(); }
+} finally {
+  await api.dispose();
+}

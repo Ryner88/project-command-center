@@ -18,8 +18,7 @@ const workflowSteps = [
   {
     href: "/proposals",
     label: "View dashboard",
-    match: (pathname: string) =>
-      pathname === "/proposals" || /^\/proposals\/[^/]+$/.test(pathname)
+    match: (pathname: string) => pathname === "/proposals" || /^\/proposals\/[^/]+$/.test(pathname)
   },
   {
     href: "/proposals",
@@ -60,11 +59,7 @@ export function WorkflowProgress() {
                   : "upcoming";
 
           return (
-            <Link
-              className={`workflow-step workflow-${state}`}
-              href={step.href}
-              key={step.label}
-            >
+            <Link className={`workflow-step workflow-${state}`} href={step.href} key={step.label}>
               <span className="workflow-index">{index + 1}</span>
               <span>{step.label}</span>
             </Link>

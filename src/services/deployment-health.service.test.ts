@@ -21,13 +21,9 @@ describe("deployment health", () => {
     mocks.isDatabaseConfigured.mockReturnValue(true);
     mocks.isDatabaseReady.mockResolvedValue(true);
 
-    const { getDeploymentHealth } = await import(
-      "@/services/deployment-health.service"
-    );
+    const { getDeploymentHealth } = await import("@/services/deployment-health.service");
 
-    await expect(
-      getDeploymentHealth({ NODE_ENV: "production" })
-    ).resolves.toEqual({
+    await expect(getDeploymentHealth({ NODE_ENV: "production" })).resolves.toEqual({
       status: "ok",
       mode: "database",
       checks: {
@@ -42,13 +38,9 @@ describe("deployment health", () => {
     mocks.isDatabaseConfigured.mockReturnValue(true);
     mocks.isDatabaseReady.mockResolvedValue(false);
 
-    const { getDeploymentHealth } = await import(
-      "@/services/deployment-health.service"
-    );
+    const { getDeploymentHealth } = await import("@/services/deployment-health.service");
 
-    await expect(
-      getDeploymentHealth({ NODE_ENV: "production" })
-    ).resolves.toEqual({
+    await expect(getDeploymentHealth({ NODE_ENV: "production" })).resolves.toEqual({
       status: "error",
       mode: "unavailable",
       checks: {
@@ -60,31 +52,23 @@ describe("deployment health", () => {
   });
 
   it("keeps local no-database demo mode explicitly allowed", async () => {
-    const { getDeploymentHealth } = await import(
-      "@/services/deployment-health.service"
-    );
+    const { getDeploymentHealth } = await import("@/services/deployment-health.service");
 
-    await expect(getDeploymentHealth({ NODE_ENV: "development" })).resolves.toEqual(
-      {
-        status: "ok",
-        mode: "demo",
-        checks: {
-          databaseConfigured: false,
-          databaseMigrated: false,
-          demoFallbackAllowed: true
-        }
+    await expect(getDeploymentHealth({ NODE_ENV: "development" })).resolves.toEqual({
+      status: "ok",
+      mode: "demo",
+      checks: {
+        databaseConfigured: false,
+        databaseMigrated: false,
+        demoFallbackAllowed: true
       }
-    );
+    });
   });
 
   it("fails readiness on Vercel when no database is available", async () => {
-    const { getDeploymentHealth } = await import(
-      "@/services/deployment-health.service"
-    );
+    const { getDeploymentHealth } = await import("@/services/deployment-health.service");
 
-    await expect(
-      getDeploymentHealth({ NODE_ENV: "development", VERCEL: "1" })
-    ).resolves.toEqual({
+    await expect(getDeploymentHealth({ NODE_ENV: "development", VERCEL: "1" })).resolves.toEqual({
       status: "error",
       mode: "unavailable",
       checks: {

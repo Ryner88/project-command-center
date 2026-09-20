@@ -8,8 +8,8 @@ export default function HomePage() {
           <span className="eyebrow">Project Command Center</span>
           <h1>Turn today&apos;s client signals into a proposal you can send.</h1>
           <p>
-            Review the morning briefing, generate a scoped proposal, then manage
-            status and exports from the dashboard.
+            Review the morning briefing, generate a scoped proposal, then manage status and exports
+            from the dashboard.
           </p>
           <div className="action-row primary-actions">
             <Link className="cta" href="/briefing">

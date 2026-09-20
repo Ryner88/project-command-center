@@ -21,10 +21,7 @@ type RouteErrorResponse = {
   details?: string[];
 };
 
-export function ProposalCardActions({
-  proposalId,
-  currentStatus
-}: ProposalCardActionsProps) {
+export function ProposalCardActions({ proposalId, currentStatus }: ProposalCardActionsProps) {
   const router = useRouter();
   const [status, setStatus] = useState<ProposalStatus>(currentStatus);
   const [error, setError] = useState<string | null>(null);
@@ -97,20 +94,10 @@ export function ProposalCardActions({
   return (
     <div className="stack actions-row">
       <div className="inline-form">
-        <button
-          className="cta"
-          disabled={isPending}
-          onClick={runExport}
-          type="button"
-        >
+        <button className="cta" disabled={isPending} onClick={runExport} type="button">
           {isPending ? "Working..." : "Open HTML export"}
         </button>
-        <button
-          className="ghost-button"
-          disabled={isPending}
-          onClick={runPdfExport}
-          type="button"
-        >
+        <button className="ghost-button" disabled={isPending} onClick={runPdfExport} type="button">
           {isPending ? "Working..." : "Export PDF"}
         </button>
       </div>
@@ -153,7 +140,8 @@ export function ProposalCardActions({
         <div className="card export-fallback-card">
           <strong>PDF fallback available</strong>
           <p className="muted">
-            Use the HTML export to keep the workflow moving, then retry PDF once the environment supports it.
+            Use the HTML export to keep the workflow moving, then retry PDF once the environment
+            supports it.
           </p>
           <button className="ghost-button" disabled={isPending} onClick={runExport} type="button">
             Open HTML export instead

@@ -12,9 +12,7 @@ type ProposalDetailPageProps = {
   params: Promise<{ id: string }>;
 };
 
-export default async function ProposalDetailPage({
-  params
-}: ProposalDetailPageProps) {
+export default async function ProposalDetailPage({ params }: ProposalDetailPageProps) {
   const { id } = await params;
   const proposal = await getProposalById(id);
 
@@ -31,8 +29,8 @@ export default async function ProposalDetailPage({
         <span className="eyebrow">Proposal Detail</span>
         <h1>{proposal.title}</h1>
         <p>
-          Generated proposal record saved in PCC. This view renders the stored
-          proposal content rather than a fixture.
+          Generated proposal record saved in PCC. This view renders the stored proposal content
+          rather than a fixture.
         </p>
         <p className="muted">
           Client: {proposal.clientName}
@@ -71,8 +69,8 @@ export default async function ProposalDetailPage({
           <div className="card">
             <strong>Review flag</strong>
             <p>
-              Regulated medical or healthcare language requires legal, privacy,
-              security, or compliance review before client delivery.
+              Regulated medical or healthcare language requires legal, privacy, security, or
+              compliance review before client delivery.
             </p>
           </div>
         ) : null}
@@ -124,18 +122,14 @@ export default async function ProposalDetailPage({
           <div className="card">
             <strong>Latest export preview</strong>
             <p className="muted">
-              <a
-                href={exports[0].filePath}
-                rel="noreferrer"
-                target="_blank"
-              >
+              <a href={exports[0].filePath} rel="noreferrer" target="_blank">
                 {exports[0].fileName}
               </a>
             </p>
           </div>
         ) : null}
       </section>
-      <ProposalEditor proposal={proposal} versions={versions}/>
+      <ProposalEditor proposal={proposal} versions={versions} />
     </main>
   );
 }

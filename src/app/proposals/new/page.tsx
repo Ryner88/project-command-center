@@ -22,9 +22,11 @@ export default async function NewProposalPage({ searchParams }: NewProposalPageP
   const seed =
     (seedId ? await getProposalSeedById(seedId) : null) ??
     (briefingItemId ? await ensureProposalSeedForBriefingItem(briefingItemId) : null);
-  const title = project ? `${project.clientName} ${project.name} Proposal` : seed?.clientName
-    ? `${seed.clientName} ${seed.projectType ?? "Project"} Proposal`
-    : `${seed?.projectType ?? "Project"} Proposal`;
+  const title = project
+    ? `${project.clientName} ${project.name} Proposal`
+    : seed?.clientName
+      ? `${seed.clientName} ${seed.projectType ?? "Project"} Proposal`
+      : `${seed?.projectType ?? "Project"} Proposal`;
 
   return (
     <main className="stack">
@@ -32,8 +34,8 @@ export default async function NewProposalPage({ searchParams }: NewProposalPageP
         <span className="eyebrow">New Proposal</span>
         <h1>Proposal generator and estimator</h1>
         <p>
-          The estimator is implemented as the proposal creation flow rather than
-          as a separate product module.
+          The estimator is implemented as the proposal creation flow rather than as a separate
+          product module.
         </p>
         <div className="card source-context-card">
           <strong>Source context carried into generation</strong>
@@ -43,7 +45,8 @@ export default async function NewProposalPage({ searchParams }: NewProposalPageP
               : "No briefing seed selected, so this flow will create a proposal directly from manual input."}
           </p>
           <p className="muted">
-            The controls below are prefilled from the selected source when available, then saved into the generated proposal record.
+            The controls below are prefilled from the selected source when available, then saved
+            into the generated proposal record.
           </p>
         </div>
       </section>
@@ -84,7 +87,8 @@ export default async function NewProposalPage({ searchParams }: NewProposalPageP
           <div className="card">
             <strong>Context, timeline, and generation flow</strong>
             <p className="muted">
-              Review the source context first, confirm dates and domain next, then generate a proposal that lands in the dashboard ready for export.
+              Review the source context first, confirm dates and domain next, then generate a
+              proposal that lands in the dashboard ready for export.
             </p>
           </div>
           <ProposalGeneratorForm

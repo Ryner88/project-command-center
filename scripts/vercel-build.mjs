@@ -17,4 +17,4 @@ if (process.env.DATABASE_URL) {
   console.log("DATABASE_URL is not set; skipping Prisma migrations.");
 }
 
-run("node", ["scripts/with-next-lock.mjs", "next", "build"]);
+run("node", ["scripts/with-next-lock.mjs", "next", "build", "--webpack"]);

@@ -3,10 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import {
-  proposalDomainOptions,
-  type ProposalDomain
-} from "@/lib/proposal-domain";
+import { proposalDomainOptions, type ProposalDomain } from "@/lib/proposal-domain";
 import { validateProposalDeadline } from "@/lib/proposal-schedule";
 
 type ProposalGeneratorFormProps = {
@@ -70,9 +67,7 @@ export function ProposalGeneratorForm({
       projectType: readOptionalField(projectType),
       projectDomain: readOptionalField(projectDomain) as ProposalDomain | undefined,
       projectDomainOther:
-        projectDomain === "OTHER"
-          ? readOptionalField(projectDomainOther)
-          : undefined,
+        projectDomain === "OTHER" ? readOptionalField(projectDomainOther) : undefined,
       summary: readOptionalField(summary),
       rawRequest: readOptionalField(rawRequest)
     };
@@ -139,7 +134,7 @@ export function ProposalGeneratorForm({
             setError(
               result?.details?.length
                 ? `${result.error ?? "Proposal generation failed."} ${result.details.join(" ")}`
-                : result?.error ?? "Proposal generation failed."
+                : (result?.error ?? "Proposal generation failed.")
             );
             return;
           }

@@ -1,0 +1,54 @@
+name: Preview release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-and-deploy:
+    runs-on: ubuntu-24.04
+    environment: preview
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run verify
+        env:
+          BUILD_ID: ${{ github.sha }}
+      - name: Pull preview configuration
+        run: npx vercel@59.23.2 pull --yes --environment=preview --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - name: Build preview artifact
+        run: npx vercel@59.23.2 build --token="$VERCEL_TOKEN"
+        env:
+          BUILD_ID: ${{ github.sha }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - name: Deploy preview artifact
+        id: deploy
+        run: echo "url=$(npx vercel@59.23.2 deploy --prebuilt --token="$VERCEL_TOKEN")" >> "$GITHUB_OUTPUT"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - name: Smoke test preview
+        run: npm run test:smoke
+        env:
+          SMOKE_BASE_URL: ${{ steps.deploy.outputs.url }}
+          SMOKE_ACCESS_PASSWORD: ${{ secrets.PREVIEW_ACCESS_PASSWORD }}
+          EXPECTED_BUILD_ID: ${{ github.sha }}
+      - name: Record preview
+        run: echo "Preview ${{ steps.deploy.outputs.url }} passed for ${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"

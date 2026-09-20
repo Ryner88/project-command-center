@@ -12,7 +12,12 @@ export const POST = observedRoute("proposals.generate", async (request: NextRequ
     const body = await request.json();
     const input = proposalGenerationSchema.parse(body);
     const proposal = await generateProposal(input);
-    await recordOwnerMutation({ action: "proposal.generated", entityType: "proposal", entityId: proposal.id, requestId: request.headers.get("x-request-id") });
+    await recordOwnerMutation({
+      action: "proposal.generated",
+      entityType: "proposal",
+      entityId: proposal.id,
+      requestId: request.headers.get("x-request-id")
+    });
 
     return NextResponse.json({ data: proposal }, { status: 201 });
   } catch (error) {

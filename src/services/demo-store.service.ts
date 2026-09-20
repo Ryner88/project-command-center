@@ -24,12 +24,7 @@ function resolveDemoStoreRoot() {
   return process.cwd();
 }
 
-const demoStorePath = path.join(
-  resolveDemoStoreRoot(),
-  "storage",
-  "proposals",
-  "demo-store.json"
-);
+const demoStorePath = path.join(resolveDemoStoreRoot(), "storage", "proposals", "demo-store.json");
 
 const defaultStore: DemoStore = {
   proposalSeeds: [
@@ -103,11 +98,7 @@ async function ensureDemoStoreFile() {
   try {
     await readFile(demoStorePath, "utf8");
   } catch {
-    await writeFile(
-      demoStorePath,
-      JSON.stringify(cloneDefaultStore(), null, 2),
-      "utf8"
-    );
+    await writeFile(demoStorePath, JSON.stringify(cloneDefaultStore(), null, 2), "utf8");
   }
 }
 

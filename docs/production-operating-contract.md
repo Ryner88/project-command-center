@@ -53,12 +53,12 @@ flowchart TD
 
 ## Mode Definitions
 
-| Mode | Purpose | Data Source | Demo Fallback |
-| --- | --- | --- | --- |
-| Production | Real single-user operation | Persistent database | Never allowed |
-| Demo | Recruiter-safe walkthrough | Isolated demo store | Native mode, labeled and resettable |
-| Test | Automated validation | Test database, mocks, or fixtures | Allowed only inside tests |
-| Development | Local implementation work | Local database or demo store | Explicit only |
+| Mode        | Purpose                    | Data Source                       | Demo Fallback                       |
+| ----------- | -------------------------- | --------------------------------- | ----------------------------------- |
+| Production  | Real single-user operation | Persistent database               | Never allowed                       |
+| Demo        | Recruiter-safe walkthrough | Isolated demo store               | Native mode, labeled and resettable |
+| Test        | Automated validation       | Test database, mocks, or fixtures | Allowed only inside tests           |
+| Development | Local implementation work  | Local database or demo store      | Explicit only                       |
 
 ## Phase 0: Production Contract And Architecture
 
@@ -227,6 +227,20 @@ Exit gate:
 - The operator does not need source-code debugging to identify common failures.
 
 ## Phase 6: CI/CD And Release Controls
+
+Implementation branch: `phase-6-release-controls`.
+
+Verification completed on 2026-09-19 with a disposable PostgreSQL database and a local release candidate:
+
+- Formatting, linting, type checking, 24 unit and integration tests, the dependency scan, and the production build passed.
+- All six migrations passed against a clean PostgreSQL database, including upgrade, constraint, and rollback checks.
+- The Phase 3 workflow, Phase 4 security test, and Phase 5 reliability test passed in sequence with owner access enabled.
+- The release smoke test verified liveness, readiness, authenticated project reads, diagnostics, and build ID `phase6-manual-build`.
+- A smoke test with the wrong build ID exited with an error, which confirms that the promotion job stops before moving the alias.
+- Manual browser testing confirmed sign-in and diagnostics. Diagnostics reported the expected build ID and a ready database.
+- GitHub issue #7 records the failed first run and the test fixes: canonical localhost use, deterministic sign-in, sequential execution, and waiting for archive writes before navigation.
+
+CI now checks formatting, linting, types, tests, dependencies, clean-database migrations, browser workflows, and the production build. Preview and production have separate environments. Production promotion checks the deployed candidate and its build ID before moving the production alias. The rollback workflow can restore a recorded deployment.
 
 Work:
 

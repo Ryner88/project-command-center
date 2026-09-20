@@ -10,7 +10,7 @@ export async function recordOwnerMutation(input: {
   requestId?: string | null;
   metadata?: Prisma.InputJsonObject;
 }) {
-  if (await getDataMode() !== "database") return;
+  if ((await getDataMode()) !== "database") return;
   const user = await ensureCurrentUser();
   await auditEvents.create(user.id, {
     action: input.action,

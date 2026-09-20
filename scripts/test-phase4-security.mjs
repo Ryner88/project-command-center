@@ -17,6 +17,7 @@ try {
 
   await page.goto(`${baseURL}/projects`);
   await page.waitForURL(/\/login/);
+  await page.waitForLoadState("networkidle");
   await page.getByLabel("Password").fill("wrong password");
   await page.getByRole("button", { name: "Sign in" }).click();
   await page.getByRole("alert").waitFor();
@@ -29,16 +30,21 @@ try {
   assert.match(headers.headers()["content-security-policy"], /frame-ancestors 'none'/);
 
   const cookies = await page.context().cookies();
-  const session = cookies.find(cookie => cookie.name === "pcc_session");
+  const session = cookies.find((cookie) => cookie.name === "pcc_session");
   assert.equal(session?.httpOnly, true);
   assert.equal(session?.sameSite, "Strict");
   assert.equal(session?.secure, process.env.EXPECT_SECURE_COOKIE !== "false");
 
   const hostile = await request.newContext({
     baseURL,
-    extraHTTPHeaders: { origin: "https://attacker.invalid", cookie: `pcc_session=${session?.value}` }
+    extraHTTPHeaders: {
+      origin: "https://attacker.invalid",
+      cookie: `pcc_session=${session?.value}`
+    }
   });
-  const csrf = await hostile.post("/api/projects", { data: { name: "Blocked", clientName: "Blocked", description: "Blocked cross-site request" } });
+  const csrf = await hostile.post("/api/projects", {
+    data: { name: "Blocked", clientName: "Blocked", description: "Blocked cross-site request" }
+  });
   assert.equal(csrf.status(), 403, "cross-origin mutation should be rejected");
   await hostile.dispose();
 
@@ -49,7 +55,12 @@ try {
   await page.getByRole("button", { name: "Create project" }).click();
   await page.waitForURL(/\/projects\/[a-z0-9]+$/);
   const projectId = page.url().split("/").pop();
-  assert.ok(await prisma.auditEvent.findFirst({ where: { action: "project.created", entityId: projectId } }), "project creation should be audited");
+  assert.ok(
+    await prisma.auditEvent.findFirst({
+      where: { action: "project.created", entityId: projectId }
+    }),
+    "project creation should be audited"
+  );
 
   await page.getByRole("button", { name: "Sign out" }).click();
   await page.waitForURL(/\/login/);

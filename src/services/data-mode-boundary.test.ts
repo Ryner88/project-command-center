@@ -92,9 +92,7 @@ describe("data mode boundary", () => {
 
     const { updateProposalStatus } = await import("@/services/proposal.service");
 
-    await expect(
-      updateProposalStatus("missing_proposal", "IN_REVIEW")
-    ).resolves.toBeNull();
+    await expect(updateProposalStatus("missing_proposal", "IN_REVIEW")).resolves.toBeNull();
   });
 
   it("returns empty seed and export reads in database mode", async () => {
@@ -103,9 +101,8 @@ describe("data mode boundary", () => {
     mocks.prisma.proposalSeed.findFirst.mockResolvedValue(null);
     mocks.prisma.export.findMany.mockResolvedValue([]);
 
-    const { listProposalSeeds, getProposalSeedById } = await import(
-      "@/services/proposal-seed.service"
-    );
+    const { listProposalSeeds, getProposalSeedById } =
+      await import("@/services/proposal-seed.service");
     const { listExportsForProposal } = await import("@/services/export.service");
 
     await expect(listProposalSeeds()).resolves.toEqual([]);
@@ -114,9 +111,7 @@ describe("data mode boundary", () => {
   });
 
   it("keeps JSON-backed demo records in demo mode", async () => {
-    const { listProposals, getProposalById } = await import(
-      "@/services/proposal.service"
-    );
+    const { listProposals, getProposalById } = await import("@/services/proposal.service");
     const { listProposalSeeds } = await import("@/services/proposal-seed.service");
 
     await expect(listProposals()).resolves.toEqual(

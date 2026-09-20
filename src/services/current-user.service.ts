@@ -17,7 +17,14 @@ async function checkDatabaseReady() {
   try {
     return await users.ready();
   } catch (error) {
-    console.warn(JSON.stringify({ level: "warn", service: "project-command-center", event: "database.not_ready", errorType: error instanceof Error ? error.name : "UnknownError" }));
+    console.warn(
+      JSON.stringify({
+        level: "warn",
+        service: "project-command-center",
+        event: "database.not_ready",
+        errorType: error instanceof Error ? error.name : "UnknownError"
+      })
+    );
     return false;
   }
 }

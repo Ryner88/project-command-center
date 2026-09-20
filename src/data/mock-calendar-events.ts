@@ -7,7 +7,8 @@ export const mockCalendarEvents: CalendarEvent[] = [
     startTime: "2:00 PM",
     endTime: "2:45 PM",
     attendee: "Sarah Chen",
-    summary: "Discovery call for a 10-page marketing site redesign with CMS, case studies, and faster lead capture."
+    summary:
+      "Discovery call for a 10-page marketing site redesign with CMS, case studies, and faster lead capture."
   },
   {
     id: "cal_2",

@@ -22,7 +22,9 @@ async function acquireLock() {
     try {
       if (!Number.isInteger(ownerPid) || ownerPid <= 0) throw new Error("stale lock");
       process.kill(ownerPid, 0);
-      console.error("Another Next.js dev server or build is using this checkout. Stop it or use a separate checkout.");
+      console.error(
+        "Another Next.js dev server or build is using this checkout. Stop it or use a separate checkout."
+      );
       process.exit(73);
     } catch {
       await rm(lockPath, { recursive: true, force: true });

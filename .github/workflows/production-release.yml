@@ -1,0 +1,56 @@
+name: Production promotion
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployment_url:
+        description: Preview URL that already passed verification
+        required: true
+        type: string
+      build_id:
+        description: Full commit SHA shown by preview diagnostics
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Inspect candidate
+        run: npx vercel@59.23.2 inspect "$DEPLOYMENT_URL" --wait --timeout 5m --token="$VERCEL_TOKEN"
+        env:
+          DEPLOYMENT_URL: ${{ inputs.deployment_url }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      - name: Smoke test candidate
+        run: npm run test:smoke
+        env:
+          SMOKE_BASE_URL: ${{ inputs.deployment_url }}
+          SMOKE_ACCESS_PASSWORD: ${{ secrets.PRODUCTION_ACCESS_PASSWORD }}
+          EXPECTED_BUILD_ID: ${{ inputs.build_id }}
+      - name: Promote verified artifact
+        run: npx vercel@59.23.2 promote "$DEPLOYMENT_URL" --yes --token="$VERCEL_TOKEN"
+        env:
+          DEPLOYMENT_URL: ${{ inputs.deployment_url }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      - name: Smoke test production
+        run: npm run test:smoke
+        env:
+          SMOKE_BASE_URL: ${{ secrets.PRODUCTION_URL }}
+          SMOKE_ACCESS_PASSWORD: ${{ secrets.PRODUCTION_ACCESS_PASSWORD }}
+          EXPECTED_BUILD_ID: ${{ inputs.build_id }}
+      - name: Record production release
+        run: echo "Promoted ${{ inputs.deployment_url }} with build ${{ inputs.build_id }}" >> "$GITHUB_STEP_SUMMARY"

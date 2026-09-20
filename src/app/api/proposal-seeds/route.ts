@@ -15,7 +15,12 @@ export const POST = observedRoute("proposal_seeds.create", async (request: NextR
   try {
     const input = proposalSeedSchema.parse(await request.json());
     const seed = await createProposalSeed(input);
-    await recordOwnerMutation({ action: "proposal_seed.created", entityType: "proposal_seed", entityId: seed.id, requestId: request.headers.get("x-request-id") });
+    await recordOwnerMutation({
+      action: "proposal_seed.created",
+      entityType: "proposal_seed",
+      entityId: seed.id,
+      requestId: request.headers.get("x-request-id")
+    });
     return NextResponse.json({ data: seed }, { status: 201 });
   } catch (error) {
     const payload = getErrorPayload(error, "Proposal source could not be created.");

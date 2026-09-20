@@ -9,13 +9,13 @@
 
 ## Alert thresholds
 
-| Signal | Warning | Page the operator |
-| --- | --- | --- |
-| Liveness | One failed check | Two checks fail within two minutes |
-| Readiness | One `503` | Two consecutive `503` responses |
-| Failed operations | Three in five minutes | Five in five minutes |
-| Health response time | Over 1 second | Over 2 seconds for three checks |
-| Backup workflow | One failed run | No verified backup within 26 hours |
+| Signal               | Warning               | Page the operator                  |
+| -------------------- | --------------------- | ---------------------------------- |
+| Liveness             | One failed check      | Two checks fail within two minutes |
+| Readiness            | One `503`             | Two consecutive `503` responses    |
+| Failed operations    | Three in five minutes | Five in five minutes               |
+| Health response time | Over 1 second         | Over 2 seconds for three checks    |
+| Backup workflow      | One failed run        | No verified backup within 26 hours |
 
 Run liveness and readiness checks once per minute. Production logs can be read in the hosting dashboard or forwarded through a log drain. Alerts should include the URL, build ID, status, and request ID. They must not include request bodies, cookies, passwords, connection strings, or client content.
 
