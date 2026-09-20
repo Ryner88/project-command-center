@@ -16,12 +16,15 @@ try {
     assert.equal(login.status(), 200, "owner sign-in should succeed");
     await page.goto(`${baseURL}/projects`);
   }
-  await page.getByLabel("Project name").fill(name);
-  await page.getByLabel("Client").fill("E2E Client");
-  await page.getByLabel("Description").fill("Build and launch an account portal with reporting.");
-  await page.getByLabel("Priority").selectOption("HIGH");
-  await page.getByLabel("Status").selectOption("ACTIVE");
-  await page.getByRole("button", { name: "Create project" }).click();
+  const createProject = page.getByRole("form", { name: "Create project" });
+  await createProject.getByLabel("Project name").fill(name);
+  await createProject.getByLabel("Client").fill("E2E Client");
+  await createProject
+    .getByLabel("Description")
+    .fill("Build and launch an account portal with reporting.");
+  await createProject.getByLabel("Priority").selectOption("HIGH");
+  await createProject.getByLabel("Status").selectOption("ACTIVE");
+  await createProject.getByRole("button", { name: "Create project" }).click();
   await page.waitForURL(/\/projects\/[a-z0-9]+$/);
   const projectUrl = page.url();
   await page.getByPlaceholder("Task title").fill("Confirm reporting requirements");

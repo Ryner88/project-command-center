@@ -25,7 +25,7 @@ export function ProjectCreateForm() {
     });
   }
   return (
-    <form className="frame stack" onSubmit={submit}>
+    <form aria-label="Create project" className="frame stack" onSubmit={submit}>
       <div className="section-head">
         <span className="eyebrow">New project</span>
         <h2>Create a working project</h2>
