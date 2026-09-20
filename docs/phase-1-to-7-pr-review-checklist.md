@@ -74,7 +74,7 @@ For each case, record one result in the PR discussion or a copy of the [manual t
 ## Phase 5 — Reliability and operations
 
 - [ ] **P5-01:** Confirm structured logs contain request and operation IDs, status, and duration without request content.
-- [ ] **P5-02:** Confirm `/api/diagnostics` reports build ID, uptime, readiness, and failed-operation data.
+- [ ] **P5-02:** Sign in as the owner, then confirm `/api/diagnostics` reports build ID, uptime, readiness, and failed-operation data. Record the authentication and response evidence.
 - [ ] **P5-03:** Stop PostgreSQL and confirm liveness stays up while readiness returns `503`.
 - [ ] **P5-04:** Confirm database-backed work fails with a safe message and request ID during the outage.
 - [ ] **P5-05:** Restart PostgreSQL and confirm readiness and database work recover without an application restart.
@@ -92,7 +92,7 @@ For each case, record one result in the PR discussion or a copy of the [manual t
 - [ ] **P6-05:** Build and deploy one preview candidate and record its URL and build ID.
 - [ ] **P6-06:** Run the candidate smoke test before promotion.
 - [ ] **P6-07:** Supply the wrong expected build ID and confirm promotion stops with a failed job.
-- [ ] **P6-08:** Promote the tested artifact and confirm production diagnostics report the same build ID.
+- [ ] **P6-08:** Promote the tested artifact, sign in as the production owner, and confirm `/api/diagnostics` reports the same build ID. Record the authentication and response evidence.
 - [ ] **P6-09:** Run or dry-run the protected rollback workflow using a recorded working deployment.
 
 ## Phase 7 — Production UX and portfolio evidence
