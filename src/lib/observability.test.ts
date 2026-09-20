@@ -35,6 +35,22 @@ describe("operation monitoring", () => {
     expect(getReliabilitySnapshot().failed).toBe(1);
   });
 
+  it("adds the request ID to handled server errors", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const route = observedRoute("test.unavailable", async () =>
+      NextResponse.json({ error: "Service unavailable." }, { status: 503 })
+    );
+    const response = await route(
+      new NextRequest("http://localhost/api/test", { headers: { "x-request-id": "request-503" } })
+    );
+    await expect(response.json()).resolves.toEqual({
+      error: "Service unavailable.",
+      requestId: "request-503"
+    });
+    expect(response.headers.get("x-request-id")).toBe("request-503");
+  });
+
   it("retries a safe read and returns after recovery", async () => {
     const work = vi.fn().mockRejectedValueOnce(new Error("temporary")).mockResolvedValue("ready");
     await expect(retryRead(work)).resolves.toBe("ready");
