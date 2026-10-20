@@ -1,8 +1,12 @@
 # Project Command Center — MVP Feature Scope
 
-**Status:** Proposed; pending agreement and inclusion in the client-facing proposal  
-**Related issue:** [#22](https://github.com/Ryner88/project-command-center/issues/22)  
+**Status:** Internal agency application scope draft; not the client analytics dashboard proposal.
+
+**Issue clarification:** [#22](https://github.com/Ryner88/project-command-center/issues/22) concerns a separate client analytics dashboard. This document must not be used to satisfy or close that issue.
+
 **Product:** Single-owner agency briefing and proposal workspace
+
+> **Source correction:** The [client analytics dashboard proposal](client-proposals/analytics-dashboard-mvp.redacted.pdf) describes a different product. See the [requirements audit](client-proposals/analytics-dashboard-mvp-requirements-audit.md). The feature boundaries below apply only to the existing agency application.
 
 ## 1. Objective and delivery boundary
 
@@ -126,4 +130,4 @@ Detailed performance, accessibility, security, defect, and acceptance ownership 
 
 A feature is inside MVP scope only when explicitly included in Sections 2–7 or necessary to satisfy an acceptance gate above. Requests for optional or excluded work require a written change request covering effort, dependencies, deliverable, milestone, and authorized approval. Broad words such as “dashboard,” “integration,” “analytics,” or “core implementation” do not silently add functionality.
 
-**Approval of this specification establishes the feature-level delivery boundary only after the client-facing proposal incorporates or explicitly references it.** Issue #22 should remain open until that alignment is reviewed and agreed.
+**This document does not establish the client analytics dashboard delivery boundary.** The client proposal requires its own feature-level scope and approved change terms. Issue #22 remains open.
