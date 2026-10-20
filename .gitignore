@@ -5,6 +5,7 @@ node_modules
 tsconfig.tsbuildinfo
 storage/temp/*
 storage/proposals/*
+storage/client-proposals/
 !.gitkeep
 .vercel
 .env*.local

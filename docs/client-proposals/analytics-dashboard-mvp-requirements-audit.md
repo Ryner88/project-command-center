@@ -1,6 +1,6 @@
 # Client analytics dashboard proposal — requirements audit
 
-**Status:** Source reviewed; feature-level scope unresolved.
+**Status:** Source reviewed. Feature-level scope proposed for discovery, not client-approved.
 
 **Related issues:** [#22](https://github.com/Ryner88/project-command-center/issues/22), [#23](https://github.com/Ryner88/project-command-center/issues/23).
 
@@ -28,10 +28,12 @@ The repository's agency application is a tool that generated and stores the clie
 
 ## Issue reconciliation
 
-- **#22:** Keep open. Its product is the client analytics dashboard. Replace or supplement the broad proposal language with a client-approved list of pages, workflows, charts, KPIs, filters, roles, permissions, and feature-to-milestone mapping. The source does **not** specify those details; this audit does not invent them.
-- **#23:** Keep open. The promise of real-time reporting is explicit, but no testable freshness or integration contract exists. Define source systems, volume, update targets, stale-data behavior, failure recovery, and verification before calling it complete.
+- **#22:** Keep open. Its product is the client analytics dashboard. Replace or supplement the broad proposal language with a client-approved list of pages, workflows, charts, KPIs, filters, roles, permissions, and feature-to-milestone mapping. Every required feature needs defined behavior, a data dependency, an acceptance test, and assignment to one of the proposal's four existing phases. The source does **not** specify those details; this audit does not invent them.
+- **#23:** Keep open. The promise of real-time reporting is explicit, but no testable freshness or integration contract exists. Define named source systems, integration ownership, data volumes, measurable freshness targets, stale-data behavior, failure recovery, and success and failure tests before calling it complete.
 - **Agency application:** Treat it as a separate existing system used to create and manage proposals. No evidence in the client export commits the client to receiving the agency application's briefing or proposal-management workflows.
+
+Potential executive, administrator, and client product-owner permissions are discovery questions, not approved roles. The four existing phases and their original dates should be retained when approved features are mapped; this audit does not create new milestones or change dates.
 
 ## Source custody
 
-The live export includes a named client, commercial terms, and calendar dates. This public copy removes those details and adds a visible redaction notice; its text and PDF metadata were checked for the removed terms. The unredacted PDF and live export URL are not stored in this public repository. The public copy preserves the product, workflow, reporting, AI, and milestone language needed for this audit.
+The live export includes a named client, commercial terms, and calendar dates. This public copy removes those details and adds a visible redaction notice; its text and PDF metadata were checked for the removed terms. The unredacted PDF and live export URL are not stored in public Git history. The unredacted PDF export is preserved in the ignored local `storage/client-proposals/` directory; it may differ byte-for-byte from the user's Windows download. The public copy preserves the product, workflow, reporting, AI, and milestone language needed for this audit. It is not the authoritative client agreement.
