@@ -106,9 +106,21 @@ An interactive Chromium session completed Vercel SSO and application owner sign-
 
 The direct download's matching hash ties the inspected HTML file to this tested Preview record. The PDF's original source deployment is still not independently established. The browser retest did not create a new proposal or repeat status persistence checks. The quote-before-board-review content question remains open.
 
+### Final browser retest on `a5fb2e6`
+
+The filter selector reset fix was deployed as `dpl_FKPKft2n7VpPYUCqVRbgjYDRSN4r` at `https://project-command-center-hp6fcyu96-ryner88s-projects.vercel.app`. Vercel reported `READY`; authenticated `/api/health` returned database mode with migrations present and demo fallback disabled. The browser completed application owner sign-in on this deployment before the following checks.
+
+| Check                     | Result | Direct browser evidence                                                                                                                                                                                                 |
+| ------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| One-click HTML download   | Pass   | Sarah Chen's **Download HTML export** saved a 23,950-byte `.html` file without a new tab or Ctrl+S. SHA-256 was `fde0eb8b2857b9c5a2873fa846b77553856fc7ee824dc42462a6418762dba396`, matching the inspected HTML export. |
+| Clear filters             | Pass   | **Won** produced the `0 of 2` empty state. Its **Clear filters** action restored `Showing 2 of 2 proposals`, reset the status selector to **All statuses**, and cleared the URL query.                                  |
+| Dashboard/detail timeline | Pass   | The dashboard and reloaded Sarah Chen detail showed October 23, 2026 to February 4, 2027, `14 weeks 6 days`, and the same four dated phase boundaries as the HTML and PDF exports.                                      |
+
+These checks verify the three requested browser behaviors on the same Preview deployment. They do not cover a fresh proposal creation, status update, production behavior, or Acme's analytics dashboard. The PDF file itself has no deployment identifier, so its origin remains unproven even though its dates and content agree with the tested saved record.
+
 ## Scope and disposition
 
 - Internal application functionality: verified in local demo and local PostgreSQL modes.
-- Deployed preview browser behavior: one-click HTML download, filtered empty-state recovery, and saved dashboard/detail timeline consistency passed on `ada6d3e`. The filter selector's stale label after clearing is being fixed and requires a new Preview retest. Proposal creation and status persistence were not repeated in this browser session.
+- Deployed preview browser behavior: one-click HTML download, filtered empty-state recovery with selector reset, and saved dashboard/detail timeline consistency passed on `a5fb2e6`. Proposal creation and status persistence were not repeated in this browser session.
 - Acme dashboard feature inventory and real-time reporting: still open in #22 and #23, pending client-facing approval.
 - No client analytics dashboard feature is validated by this proposal-management test.
