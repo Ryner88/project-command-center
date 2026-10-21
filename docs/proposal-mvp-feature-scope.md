@@ -31,6 +31,8 @@ The source project also includes project pages, project tasks, proposal editing/
 
 The dashboard must show saved proposal counts for **Draft**, **In Review**, **Sent**, and **Won/Lost combined**. It must also show the number of proposals with an HTML export and the number matching the active list filters. Pipeline and exported counts cover the owner's saved proposal set; the matching count covers the filtered list. The existing **In flight**, **Due soon**, and **Ready to send** summaries may supplement these required counts.
 
+The current `/proposals` Pipeline Snapshot renders all four required status-count cards. The filter summary displays the exported and matching counts.
+
 Required visual summaries are numerical status cards, an urgency-ranked attention queue, status badges on proposals, and morning briefing urgency groups. Graphical bar, line, pie, and doughnut charts are not required.
 
 | Filter          | Values                                      | Required behavior                                      |
