@@ -19,7 +19,7 @@ export const GET = observedRoute<[ExportDownloadRouteProps]>(
       return new NextResponse(document.content, {
         headers: {
           "Content-Type": document.mimeType,
-          "Content-Disposition": `inline; filename="${document.fileName}"`,
+          "Content-Disposition": `attachment; filename="${document.fileName}"`,
           "Cache-Control": "no-store"
         }
       });

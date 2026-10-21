@@ -31,7 +31,7 @@ DATABASE_URL='postgresql://...' npm run prisma:migrate:deploy
 DATABASE_URL='postgresql://...' npm run data:import -- export.json
 ```
 
-The importer accepts schema version 1, validates its records, requires an empty database, and writes all records in one transaction. It preserves user, seed, and proposal IDs. Export metadata is rebuilt from each proposal ID, so deployment-specific paths from the source are not copied.
+The importer accepts schema version 2, validates its records, requires an empty database, and writes the complete workspace in one transaction. It preserves IDs, relationships, and timestamps for users, briefing items, proposal seeds, projects, proposals, tasks, proposal versions, and audit events. Export metadata is rebuilt from each proposal ID, so deployment-specific paths from the source are not copied.
 
 ## Tested restore record: 2026-09-18
 

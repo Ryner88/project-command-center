@@ -26,9 +26,9 @@ try {
     assert.equal(typeof body.reliability.uptimeSeconds, "number");
   } else {
     const failed = await api.get("/api/projects");
-    assert.equal(failed.status(), 500, "database-backed request should fail safely");
+    assert.equal(failed.status(), 503, "database-backed request should report unavailable safely");
     const body = await failed.json();
-    assert.equal(body.error, "The service could not complete this request.");
+    assert.equal(body.error, "Project workflows require a configured database.");
     assert.ok(body.requestId);
   }
   console.log(`Phase 5 ${expected} reliability checks passed`);

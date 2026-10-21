@@ -20,11 +20,16 @@ try {
   if (command === "export") {
     const payload = await db.$transaction(
       async (tx) => ({
-        schemaVersion: 1,
+        schemaVersion: 2,
         exportedAt: new Date().toISOString(),
         users: await tx.user.findMany({ orderBy: { id: "asc" } }),
+        briefingItems: await tx.briefingItem.findMany({ orderBy: { id: "asc" } }),
         proposalSeeds: await tx.proposalSeed.findMany({ orderBy: { id: "asc" } }),
-        proposals: await tx.proposal.findMany({ orderBy: { id: "asc" } })
+        projects: await tx.project.findMany({ orderBy: { id: "asc" } }),
+        proposals: await tx.proposal.findMany({ orderBy: { id: "asc" } }),
+        tasks: await tx.task.findMany({ orderBy: { id: "asc" } }),
+        proposalVersions: await tx.proposalVersion.findMany({ orderBy: { id: "asc" } }),
+        auditEvents: await tx.auditEvent.findMany({ orderBy: { id: "asc" } })
       }),
       { isolationLevel: "RepeatableRead" }
     );
@@ -33,18 +38,39 @@ try {
   } else {
     const payload = JSON.parse(await readFile(file, "utf8"));
     if (
-      payload.schemaVersion !== 1 ||
+      payload.schemaVersion !== 2 ||
       !Number.isFinite(Date.parse(payload.exportedAt)) ||
       !Array.isArray(payload.users) ||
+      !Array.isArray(payload.briefingItems) ||
       !Array.isArray(payload.proposalSeeds) ||
+      !Array.isArray(payload.projects) ||
       !Array.isArray(payload.proposals) ||
+      !Array.isArray(payload.tasks) ||
+      !Array.isArray(payload.proposalVersions) ||
+      !Array.isArray(payload.auditEvents) ||
       !payload.users.every((r) => validRecord(r, ["id", "email", "createdAt", "updatedAt"])) ||
+      !payload.briefingItems.every((r) =>
+        validRecord(r, ["id", "userId", "title", "summary", "source", "createdAt", "updatedAt"])
+      ) ||
       !payload.proposalSeeds.every(
         (r) =>
           validRecord(r, ["id", "userId", "sourceType", "summary", "createdAt", "updatedAt"]) &&
           r.context &&
           typeof r.context === "object" &&
           !Array.isArray(r.context)
+      ) ||
+      !payload.projects.every((r) =>
+        validRecord(r, [
+          "id",
+          "userId",
+          "name",
+          "clientName",
+          "description",
+          "status",
+          "priority",
+          "createdAt",
+          "updatedAt"
+        ])
       ) ||
       !payload.proposals.every(
         (r) =>
@@ -62,6 +88,20 @@ try {
           ["scope", "deliverables", "taskBreakdown", "risks", "assumptions"].every(
             (key) => Array.isArray(r[key]) && r[key].every((item) => typeof item === "string")
           )
+      ) ||
+      !payload.tasks.every((r) =>
+        validRecord(r, ["id", "userId", "projectId", "title", "priority", "createdAt", "updatedAt"])
+      ) ||
+      !payload.proposalVersions.every(
+        (r) =>
+          validRecord(r, ["id", "userId", "proposalId", "createdAt"]) &&
+          Number.isInteger(r.version) &&
+          r.snapshot &&
+          typeof r.snapshot === "object" &&
+          !Array.isArray(r.snapshot)
+      ) ||
+      !payload.auditEvents.every((r) =>
+        validRecord(r, ["id", "userId", "action", "entityType", "createdAt"])
       )
     ) {
       throw new Error("Invalid or unsupported portable export");
@@ -69,14 +109,26 @@ try {
     await db.$transaction(async (tx) => {
       const counts = await Promise.all([
         tx.user.count(),
+        tx.briefingItem.count(),
         tx.proposalSeed.count(),
+        tx.project.count(),
         tx.proposal.count(),
-        tx.export.count()
+        tx.task.count(),
+        tx.proposalVersion.count(),
+        tx.export.count(),
+        tx.auditEvent.count()
       ]);
       if (counts.some(Boolean)) throw new Error("Import requires an empty database");
       for (const user of payload.users) await tx.user.create({ data: user });
+      for (const item of payload.briefingItems) await tx.briefingItem.create({ data: item });
       for (const seed of payload.proposalSeeds) await tx.proposalSeed.create({ data: seed });
+      for (const project of payload.projects) await tx.project.create({ data: project });
       for (const proposal of payload.proposals) await tx.proposal.create({ data: proposal });
+      for (const task of payload.tasks) await tx.task.create({ data: task });
+      for (const version of payload.proposalVersions) {
+        await tx.proposalVersion.create({ data: version });
+      }
+      for (const event of payload.auditEvents) await tx.auditEvent.create({ data: event });
       // Export metadata is regenerated from proposal IDs; serialized file paths are never trusted.
       for (const proposal of payload.proposals) {
         await tx.export.create({
