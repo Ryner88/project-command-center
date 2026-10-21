@@ -18,11 +18,11 @@ Keep preview and production databases, owner passwords, session secrets, OpenAI 
 
 1. Open a pull request and wait for every CI job to pass.
 2. Merge the reviewed change to `main`.
-3. Run **Preview release** for the exact `main` commit. The workflow repeats local gates, builds one Vercel artifact, deploys it as a preview, and runs the release smoke test.
+3. Run **Preview release** for the exact `main` commit. The workflow repeats local gates, builds a Preview artifact, deploys it, and runs the release smoke test.
 4. Open preview `/api/diagnostics`. Record the full build ID and preview URL.
 5. Test sign-in, an existing project, an existing proposal, HTML export, liveness, and readiness.
-6. Run **Production promotion** with that preview URL and build ID.
-7. Approve the protected production environment. The workflow inspects and smoke-tests the candidate before promotion, promotes the same artifact, and smoke-tests production afterward.
+6. Confirm the production database backup and migration readiness. Run **Production promotion** from the same `main` commit. Preview and Production use separate environment variables, so Production requires its own build.
+7. Approve the protected production environment. The workflow builds with Production configuration, stages the deployment without assigning production domains, smoke-tests that staged artifact, promotes it, and smoke-tests the production domain.
 8. Save the workflow links, build ID, production URL, migration result, and smoke result in the release record.
 
 A failed command stops its job. Promotion cannot run after a failed candidate smoke test, and a failed production smoke test leaves a visible failed release record.

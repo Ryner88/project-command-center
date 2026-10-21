@@ -240,7 +240,7 @@ Verification completed on 2026-09-19 with a disposable PostgreSQL database and a
 - Manual browser testing confirmed sign-in and diagnostics. Diagnostics reported the expected build ID and a ready database.
 - GitHub issue #7 records the failed first run and the test fixes: canonical localhost use, deterministic sign-in, sequential execution, and waiting for archive writes before navigation.
 
-CI now checks formatting, linting, types, tests, dependencies, clean-database migrations, browser workflows, and the production build. Preview and production have separate environments. Production promotion checks the deployed candidate and its build ID before moving the production alias. The rollback workflow can restore a recorded deployment.
+CI now checks formatting, linting, types, tests, dependencies, clean-database migrations, browser workflows, and the production build. Preview and production have separate environments. The release workflow builds and checks a staged Production deployment before moving the production alias. The rollback workflow can restore a recorded deployment.
 
 Work:
 
