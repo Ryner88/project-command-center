@@ -64,8 +64,13 @@ export function ProposalCardActions({ proposalId, currentStatus }: ProposalCardA
       }
 
       const result = (await response.json()) as ExportResponse;
-      setSuccess("HTML export is ready. Opening the exported document now.");
-      window.open(result.data.filePath, "_blank", "noopener,noreferrer");
+      setSuccess("HTML export is ready. Downloading the document now.");
+      const link = document.createElement("a");
+      link.href = result.data.filePath;
+      link.download = "";
+      document.body.append(link);
+      link.click();
+      link.remove();
       router.push(`/proposals?exported=${proposalId}`);
       router.refresh();
     });
@@ -95,7 +100,7 @@ export function ProposalCardActions({ proposalId, currentStatus }: ProposalCardA
     <div className="stack actions-row">
       <div className="inline-form">
         <button className="cta" disabled={isPending} onClick={runExport} type="button">
-          {isPending ? "Working..." : "Open HTML export"}
+          {isPending ? "Working..." : "Download HTML export"}
         </button>
         <button className="ghost-button" disabled={isPending} onClick={runPdfExport} type="button">
           {isPending ? "Working..." : "Export PDF"}
@@ -145,7 +150,7 @@ export function ProposalCardActions({ proposalId, currentStatus }: ProposalCardA
             supports it.
           </p>
           <button className="ghost-button" disabled={isPending} onClick={runExport} type="button">
-            Open HTML export instead
+            Download HTML export instead
           </button>
         </div>
       ) : null}

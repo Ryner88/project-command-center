@@ -1,6 +1,6 @@
 import { formatProposalDate } from "@/lib/date";
 import { AppError } from "@/lib/app-error";
-import { buildProposalSchedule } from "@/lib/proposal-schedule";
+import { buildProposalSchedule, getProposalScheduleDisplay } from "@/lib/proposal-schedule";
 import { upsertProposalExport } from "@/services/export.service";
 import { getProposalById } from "@/services/proposal.service";
 
@@ -106,15 +106,12 @@ export function renderProposalHtml(proposal: Awaited<ReturnType<typeof getPropos
   const deliverableCount = proposal.deliverables.length;
   const riskLevel = deriveRiskLevel(proposal.risks);
   const projectLabel = deriveProjectLabel(proposal);
-  const schedule = proposal.dueDate
-    ? buildProposalSchedule(proposal.dueDate, proposal.taskBreakdown, proposal.startDate)
-    : null;
-  const displayTimeline = schedule
-    ? `${formatDuration(schedule.totalDays)} delivery plan`
-    : (proposal.timeline ?? "To be confirmed");
-  const executiveSummary = buildExecutiveSummary(proposal, schedule);
+  const scheduleDisplay = getProposalScheduleDisplay(proposal);
+  const schedule = scheduleDisplay.schedule;
+  const displayTimeline = scheduleDisplay.timeline ?? "To be confirmed";
+  const executiveSummary = buildExecutiveSummary(proposal, displayTimeline);
   const scopeNarrative = buildScopeNarrative(proposal);
-  const timelineNarrative = buildTimelineNarrative(proposal, schedule);
+  const timelineNarrative = buildTimelineNarrative(proposal, schedule, displayTimeline);
   const commercialNotes = buildCommercialNotes(proposal, displayTimeline);
   const formattedStartDate = formatProposalDate(proposal.startDate);
   const formattedDeadline = formatProposalDate(proposal.dueDate);
@@ -797,16 +794,12 @@ function createTimelineHeading(detail: string, index: number) {
 
 function buildExecutiveSummary(
   proposal: NonNullable<Awaited<ReturnType<typeof getProposalById>>>,
-  schedule: ReturnType<typeof buildProposalSchedule>
+  displayTimeline: string
 ) {
   const summary = cleanSentence(proposal.summary);
   const deliverables = proposal.deliverables.length;
   const phaseLabel = detectPhaseLabel(proposal);
-  const durationLabel = schedule
-    ? `${formatDuration(schedule.totalDays)} dated delivery plan`
-    : (proposal.timeline ?? "a timeline to be confirmed");
-
-  return `${summary} This ${phaseLabel.toLowerCase()} is structured around ${deliverables} defined deliverable${deliverables === 1 ? "" : "s"}, with delivery planned over ${durationLabel} and commercial scope held within the stated estimate range.`;
+  return `${summary} This ${phaseLabel.toLowerCase()} is structured around ${deliverables} defined deliverable${deliverables === 1 ? "" : "s"}, with delivery planned over ${displayTimeline} and commercial scope held within the stated estimate range.`;
 }
 
 function buildScopeNarrative(proposal: NonNullable<Awaited<ReturnType<typeof getProposalById>>>) {
@@ -818,7 +811,8 @@ function buildScopeNarrative(proposal: NonNullable<Awaited<ReturnType<typeof get
 
 function buildTimelineNarrative(
   proposal: NonNullable<Awaited<ReturnType<typeof getProposalById>>>,
-  schedule: ReturnType<typeof buildProposalSchedule>
+  schedule: ReturnType<typeof buildProposalSchedule>,
+  displayTimeline: string
 ) {
   if (schedule) {
     const startLabel = schedule.startDate
@@ -832,7 +826,7 @@ function buildTimelineNarrative(
 
   const taskCount = proposal.taskBreakdown.length;
 
-  return `The work plan is organized into ${taskCount} implementation step${taskCount === 1 ? "" : "s"} across ${proposal.timeline ?? "the proposed delivery window"}. Sequence, review points, and handoff expectations are presented in a clear client-facing order.`;
+  return `The work plan is organized into ${taskCount} implementation step${taskCount === 1 ? "" : "s"} across ${displayTimeline}. Sequence, review points, and handoff expectations are presented in a clear client-facing order.`;
 }
 
 function buildCommercialNotes(
@@ -856,21 +850,6 @@ function buildCommercialNotes(
       }
     ]
   };
-}
-
-function formatDuration(totalDays: number) {
-  const weeks = Math.floor(totalDays / 7);
-  const days = totalDays % 7;
-
-  if (weeks > 0 && days > 0) {
-    return `${weeks} week${weeks === 1 ? "" : "s"} ${days} day${days === 1 ? "" : "s"}`;
-  }
-
-  if (weeks > 0) {
-    return `${weeks} week${weeks === 1 ? "" : "s"}`;
-  }
-
-  return `${days} day${days === 1 ? "" : "s"}`;
 }
 
 function toDateInput(date: Date) {

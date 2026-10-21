@@ -36,6 +36,10 @@ export function parseDateInput(value?: string) {
     return undefined;
   }
 
+  if (parsed.toISOString().slice(0, 10) !== value) {
+    return undefined;
+  }
+
   return parsed;
 }
 
@@ -66,11 +70,11 @@ export function formatProposalDateRange(start: Date, end: Date) {
   const endDay = end.getUTCDate();
 
   if (sameMonth) {
-    return `${startMonth} ${startDay}-${endDay}`;
+    return `${startMonth} ${startDay}-${endDay}, ${end.getUTCFullYear()}`;
   }
 
   if (sameYear) {
-    return `${startMonth} ${startDay}-${endMonth} ${endDay}`;
+    return `${startMonth} ${startDay}-${endMonth} ${endDay}, ${end.getUTCFullYear()}`;
   }
 
   return `${startMonth} ${startDay}, ${start.getUTCFullYear()}-${endMonth} ${endDay}, ${end.getUTCFullYear()}`;
