@@ -1,7 +1,7 @@
 import { projects, proposals, seeds, transaction } from "@/repositories/persistence.repository";
 import { AppError } from "@/lib/app-error";
 import { isValidDateInput } from "@/lib/date";
-import { validateProposalDeadline } from "@/lib/proposal-schedule";
+import { getProposalScheduleDisplay, validateProposalDeadline } from "@/lib/proposal-schedule";
 import { getProposalDomainLabel, inferProposalDomain } from "@/lib/proposal-domain";
 import { getDataMode, isDatabaseMode } from "@/services/data-mode.service";
 import { readDemoStore, writeDemoStore } from "@/services/demo-store.service";
@@ -37,6 +37,12 @@ export async function generateProposal(input: ProposalGenerationInput): Promise<
 
   const normalized = await normalizeProposalGenerationInput(input);
   const generated = await generateProposalDraft(normalized);
+  const scheduleDisplay = getProposalScheduleDisplay({
+    startDate: normalized.startDate,
+    dueDate: normalized.dueDate,
+    timeline: generated.timeline,
+    taskBreakdown: generated.taskBreakdown
+  });
   const proposal: Proposal = {
     id: "",
     proposalSeedId: normalized.proposalSeedId,
@@ -52,8 +58,8 @@ export async function generateProposal(input: ProposalGenerationInput): Promise<
     summary: generated.summary,
     scope: generated.scope,
     deliverables: generated.deliverables,
-    taskBreakdown: generated.taskBreakdown,
-    timeline: generated.timeline,
+    taskBreakdown: scheduleDisplay.taskBreakdown,
+    timeline: scheduleDisplay.timeline,
     risks: generated.risks,
     assumptions: generated.assumptions,
     priceRange: generated.priceRange,
@@ -266,7 +272,19 @@ export async function updateProposalStatus(
 }
 export async function editProposal(id: string, input: z.infer<typeof proposalEditSchema>) {
   const user = await ensureCurrentUser();
-  const p = await proposals.edit(user.id, id, { ...input, timeline: input.timeline || null });
+  const existing = await proposals.get(user.id, id);
+  if (!existing) return null;
+  const scheduleDisplay = getProposalScheduleDisplay({
+    startDate: existing.startDate ?? undefined,
+    dueDate: existing.dueDate ?? undefined,
+    timeline: input.timeline,
+    taskBreakdown: input.taskBreakdown
+  });
+  const p = await proposals.edit(user.id, id, {
+    ...input,
+    timeline: scheduleDisplay.timeline || null,
+    taskBreakdown: scheduleDisplay.taskBreakdown
+  });
   return p ? mapProposalRecord(p) : null;
 }
 export async function listProposalVersions(id: string) {

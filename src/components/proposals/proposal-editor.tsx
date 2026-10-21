@@ -48,8 +48,16 @@ export function ProposalEditor({
         <textarea name="summary" defaultValue={proposal.summary} rows={5} required />
         <div className="grid two">
           <input name="priceRange" defaultValue={proposal.priceRange} required />
-          <input name="timeline" defaultValue={proposal.timeline} />
+          <input
+            aria-label="Timeline"
+            name="timeline"
+            defaultValue={proposal.timeline}
+            readOnly={Boolean(proposal.dueDate)}
+          />
         </div>
+        {proposal.dueDate ? (
+          <p className="muted">Timeline and phase dates follow the saved start and deadline.</p>
+        ) : null}
         {fields.map((k) => (
           <label className="input-group" key={k}>
             <span className="field-label">{k.replace(/([A-Z])/g, " $1")}</span>

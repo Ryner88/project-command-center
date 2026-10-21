@@ -36,6 +36,12 @@ export function validateProposalDeadline(
   startDate?: string,
   today: Date = getTodayUtcDate()
 ) {
+  const requestedStartDate = parseDateInput(startDate);
+
+  if (startDate && !requestedStartDate) {
+    return "Enter a valid start date.";
+  }
+
   if (!dueDate) {
     return null;
   }
@@ -44,12 +50,6 @@ export function validateProposalDeadline(
 
   if (!deadline) {
     return "Enter a valid deadline date.";
-  }
-
-  const requestedStartDate = parseDateInput(startDate);
-
-  if (startDate && !requestedStartDate) {
-    return "Enter a valid start date.";
   }
 
   if (requestedStartDate && deadline < requestedStartDate) {
@@ -81,7 +81,11 @@ export function buildProposalSchedule(
 
   const requestedStartDate = parseDateInput(startDate);
 
-  if (requestedStartDate && requestedStartDate <= deadline) {
+  if (startDate && (!requestedStartDate || requestedStartDate > deadline)) {
+    return null;
+  }
+
+  if (requestedStartDate) {
     return buildForwardProposalSchedule(requestedStartDate, deadline, taskBreakdown);
   }
 
@@ -95,7 +99,7 @@ function buildBackplannedSchedule(deadline: Date, taskBreakdown: string[]) {
   for (let index = PHASE_CONFIG.length - 1; index >= 0; index -= 1) {
     const config = PHASE_CONFIG[index];
     const phaseStart = addUtcDays(phaseEnd, -(config.durationDays - 1));
-    const item = taskBreakdown[index] ?? config.title;
+    const item = getPhaseTaskDetail(taskBreakdown, index, config.title);
 
     phases.unshift({
       index,
@@ -120,8 +124,8 @@ function buildBackplannedSchedule(deadline: Date, taskBreakdown: string[]) {
 }
 
 function buildForwardProposalSchedule(startDate: Date, deadline: Date, taskBreakdown: string[]) {
-  const totalDays = getInclusiveDateSpan(startDate, deadline);
-  const phaseLengths = allocatePhaseDays(totalDays);
+  const calendarDays = getInclusiveDateSpan(startDate, deadline);
+  const phaseLengths = allocatePhaseDays(calendarDays);
   const phases = [];
   let phaseStart = startDate;
 
@@ -129,7 +133,7 @@ function buildForwardProposalSchedule(startDate: Date, deadline: Date, taskBreak
     const config = PHASE_CONFIG[index];
     const durationDays = phaseLengths[index];
     const phaseEnd = addUtcDays(phaseStart, durationDays - 1);
-    const item = taskBreakdown[index] ?? config.title;
+    const item = getPhaseTaskDetail(taskBreakdown, index, config.title);
 
     phases.push({
       index,
@@ -145,11 +149,57 @@ function buildForwardProposalSchedule(startDate: Date, deadline: Date, taskBreak
 
   return {
     phases,
-    totalWeeks: totalDays / 7,
-    totalDays,
+    totalWeeks: (calendarDays - 1) / 7,
+    totalDays: calendarDays - 1,
     startDate,
     endDate: deadline,
     deadlineLabel: formatProposalDate(toDateInput(deadline))
+  };
+}
+
+export function formatProposalDuration(totalDays: number) {
+  const weeks = Math.floor(totalDays / 7);
+  const days = totalDays % 7;
+
+  if (weeks > 0 && days > 0) {
+    return `${weeks} week${weeks === 1 ? "" : "s"} ${days} day${days === 1 ? "" : "s"}`;
+  }
+
+  if (weeks > 0) {
+    return `${weeks} week${weeks === 1 ? "" : "s"}`;
+  }
+
+  return `${days} day${days === 1 ? "" : "s"}`;
+}
+
+export function getProposalScheduleDisplay(proposal: {
+  startDate?: string;
+  dueDate?: string;
+  timeline?: string;
+  taskBreakdown: string[];
+}) {
+  if (!proposal.dueDate) {
+    return { timeline: proposal.timeline, taskBreakdown: proposal.taskBreakdown, schedule: null };
+  }
+
+  const schedule = buildProposalSchedule(
+    proposal.dueDate,
+    proposal.taskBreakdown,
+    proposal.startDate
+  );
+
+  if (!schedule) {
+    return {
+      timeline: "Schedule needs review: invalid start date or deadline",
+      taskBreakdown: proposal.taskBreakdown,
+      schedule: null
+    };
+  }
+
+  return {
+    timeline: `${formatProposalDuration(schedule.totalDays)} delivery plan`,
+    taskBreakdown: schedule.phases.map((phase) => `${phase.rangeLabel}: ${phase.detail}`),
+    schedule
   };
 }
 
@@ -206,6 +256,14 @@ function getInclusiveDateSpan(startDate: Date, endDate: Date) {
 function normalizeTaskDetail(value: string) {
   const parts = value.split(":");
   return parts.length > 1 ? parts.slice(1).join(":").trim() : value.trim();
+}
+
+function getPhaseTaskDetail(taskBreakdown: string[], index: number, fallback: string) {
+  if (index === PHASE_CONFIG.length - 1 && taskBreakdown.length > PHASE_CONFIG.length) {
+    return taskBreakdown.slice(index).map(normalizeTaskDetail).join("; ");
+  }
+
+  return taskBreakdown[index] ?? fallback;
 }
 
 function toDateInput(date: Date) {

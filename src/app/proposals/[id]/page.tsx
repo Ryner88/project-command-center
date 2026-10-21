@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { formatProposalDate } from "@/lib/date";
+import { getProposalScheduleDisplay } from "@/lib/proposal-schedule";
 import { getProposalDomainLabel } from "@/lib/proposal-domain";
 import { listExportsForProposal } from "@/services/export.service";
 import { ProposalEditor } from "@/components/proposals/proposal-editor";
@@ -22,6 +23,7 @@ export default async function ProposalDetailPage({ params }: ProposalDetailPageP
 
   const exports = await listExportsForProposal(proposal.id);
   const versions = await listProposalVersions(proposal.id);
+  const scheduleDisplay = getProposalScheduleDisplay(proposal);
 
   return (
     <main className="stack">
@@ -41,7 +43,7 @@ export default async function ProposalDetailPage({ params }: ProposalDetailPageP
           {proposal.startDate
             ? ` • Start: ${formatProposalDate(proposal.startDate) ?? proposal.startDate}`
             : ""}
-          {proposal.timeline ? ` • Timeline: ${proposal.timeline}` : ""}
+          {scheduleDisplay.timeline ? ` • Timeline: ${scheduleDisplay.timeline}` : ""}
           {proposal.dueDate
             ? ` • Deadline: ${formatProposalDate(proposal.dueDate) ?? proposal.dueDate}`
             : ""}
@@ -94,7 +96,7 @@ export default async function ProposalDetailPage({ params }: ProposalDetailPageP
           <div className="card">
             <strong>Task breakdown</strong>
             <ul className="feature-list">
-              {proposal.taskBreakdown.map((item) => (
+              {scheduleDisplay.taskBreakdown.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
@@ -120,16 +122,23 @@ export default async function ProposalDetailPage({ params }: ProposalDetailPageP
         </div>
         {exports.length > 0 ? (
           <div className="card">
-            <strong>Latest export preview</strong>
+            <strong>Latest export</strong>
             <p className="muted">
-              <a href={exports[0].filePath} rel="noreferrer" target="_blank">
+              <a download href={exports[0].filePath}>
                 {exports[0].fileName}
               </a>
             </p>
           </div>
         ) : null}
       </section>
-      <ProposalEditor proposal={proposal} versions={versions} />
+      <ProposalEditor
+        proposal={{
+          ...proposal,
+          timeline: scheduleDisplay.timeline,
+          taskBreakdown: scheduleDisplay.taskBreakdown
+        }}
+        versions={versions}
+      />
     </main>
   );
 }

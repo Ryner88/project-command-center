@@ -50,9 +50,26 @@ The preview for evidence commit `aa255c39baa68d3091f61efa31a944e17c458398` is de
 
 `npx vercel env ls preview` listed no `DATABASE_URL` for the linked project. It also listed no `APP_ACCESS_PASSWORD` or `SESSION_SECRET`, which the repository's Preview environment example requires for owner sign-in. The missing Preview database variable accounts for `databaseConfigured: false`; no production database setting was inspected or changed. A separate Preview PostgreSQL database, required variables, migrations, and a fresh deployment are needed before a database-backed preview browser test can run. **No deployed preview browser workflow was performed**, and deployment protection was not changed. GitHub's deployment and CI checks are separate from application readiness and manual preview verification.
 
+### Fresh Preview deployment and browser observations
+
+The later deployment `dpl_3rGVCBPFixAewUvDdNcocvVgmC9w` at `https://project-command-center-bh8acyatf-ryner88s-projects.vercel.app` was built from `ac9a0d8` for Preview. It is Vercel `READY` and remains protected by Vercel Authentication. Authenticated CLI access to `/api/health` returned `status: "ok"`, `mode: "database"`, `databaseConfigured: true`, `databaseMigrated: true`, and `demoFallbackAllowed: false`. The PR's quality, migrations, build, and end-to-end CI checks passed.
+
+The owner reported successful sign-in through the new protected Preview URL. The owner also reported the following findings while exercising the proposal workflow; these are user observations, not independently observed automated browser results:
+
+| Observation                                           | Result on `ac9a0d8`                                                                                                                                                                      |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Owner sign-in                                         | Passed, per owner report.                                                                                                                                                                |
+| HTML export action                                    | Opened the HTML document in a browser tab rather than downloading it automatically.                                                                                                      |
+| Filtered empty state                                  | Incorrectly offered “Create the first proposal” when saved proposals existed but none matched the filters.                                                                               |
+| Proposal with start `2026-11-01` and due `2027-06-15` | Dashboard showed a generic `4–6 weeks` timeline and tasks ended at Week 6, while export showed dated milestones across the longer window. The selected dates are 226 elapsed days apart. |
+
+Proposal creation, saved detail after reload, status persistence, filter results, export content, and browser diagnostics on this protected Preview have not yet been reported as passing. Do not treat this deployment as a complete end-to-end pass.
+
+The working branch now includes fixes for the HTML download behavior, filtered empty state, and date-authoritative proposal scheduling. Those changes were made **after** `ac9a0d8` and require a new deployment and browser retest before the Preview findings can be closed. Existing saved proposals are not migrated or rewritten; views and exports derive a consistent schedule from their saved dates, and an explicit edit can save the normalized schedule.
+
 ## Scope and disposition
 
 - Internal application functionality: verified in local demo and local PostgreSQL modes.
-- Deployed preview browser behavior: blocked by Vercel authentication access.
+- Deployed preview browser behavior: owner sign-in reported as passed; other workflow results are unverified and three issues were observed.
 - Acme dashboard feature inventory and real-time reporting: still open in #22 and #23, pending client-facing approval.
 - No client analytics dashboard feature is validated by this proposal-management test.

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ProposalCardActions } from "@/components/proposals/proposal-card-actions";
 import { formatProposalDate } from "@/lib/date";
 import { getProposalDomainLabel } from "@/lib/proposal-domain";
+import { getProposalScheduleDisplay } from "@/lib/proposal-schedule";
 import { listExportsForProposal } from "@/services/export.service";
 import { listProposals } from "@/services/proposal.service";
 import type { Proposal, ProposalStatus } from "@/types/proposal";
@@ -300,7 +301,10 @@ export default async function ProposalsPage({ searchParams }: ProposalsPageProps
                 </div>
                 {exports.length > 0 && (
                   <p className="muted">
-                    Latest export: <a href={exports[0].filePath}>{exports[0].fileName}</a>
+                    Latest export:{" "}
+                    <a download href={exports[0].filePath}>
+                      {exports[0].fileName}
+                    </a>
                   </p>
                 )}
               </div>
@@ -318,9 +322,15 @@ export default async function ProposalsPage({ searchParams }: ProposalsPageProps
                   ? "Clear or change the filters to see more proposals."
                   : "Create the first proposal from project context, briefing context, or direct input."}
               </p>
-              <Link className="cta" href="/proposals/new">
-                Create the first proposal
-              </Link>
+              {proposalCards.length ? (
+                <Link className="cta" href="/proposals">
+                  Clear filters
+                </Link>
+              ) : (
+                <Link className="cta" href="/proposals/new">
+                  Create the first proposal
+                </Link>
+              )}
             </div>
           ) : null}
         </div>
@@ -440,6 +450,7 @@ function isDueSoon(proposal: Proposal) {
 }
 
 function buildHealthLine({ proposal, exports }: ProposalCard) {
+  const timeline = getProposalScheduleDisplay(proposal).timeline;
   return [
     `Client: ${proposal.clientName}`,
     proposal.projectType ? `Type: ${proposal.projectType}` : null,
@@ -452,7 +463,7 @@ function buildHealthLine({ proposal, exports }: ProposalCard) {
     proposal.dueDate
       ? `Deadline: ${formatProposalDate(proposal.dueDate) ?? proposal.dueDate}`
       : null,
-    proposal.timeline ? `Timeline: ${proposal.timeline}` : null,
+    timeline ? `Timeline: ${timeline}` : null,
     proposal.sourceLabel ? `Source: ${proposal.sourceLabel}` : null,
     exports.length > 0 ? "Export ready" : "No export yet"
   ]
