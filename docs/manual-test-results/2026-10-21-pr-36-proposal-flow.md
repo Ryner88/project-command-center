@@ -46,7 +46,9 @@ The local app and disposable database were stopped after verification. These che
 
 ## Deployed preview
 
-The exact commit's Vercel preview is `https://project-command-center-7krhr9kga-ryner88s-projects.vercel.app`. Its `/api/health` route redirected to Vercel SSO before the application responded. The available Vercel CLI identity requires a fresh interactive login. An attempt to create a temporary shareable authentication link was rejected by automatic approval review because it would bypass deployment protection. **No preview browser workflow was performed**, and deployment protection was not changed. GitHub's Vercel deployment check and CI jobs passed for the tested commit; those automated results are separate from manual preview verification.
+The preview for evidence commit `aa255c39baa68d3091f61efa31a944e17c458398` is deployment `dpl_7tuS7Df75nDFrf8R2szcXsJpJcSy` at `https://project-command-center-jwz3a6h0i-ryner88s-projects.vercel.app`. It is in Vercel's `READY` build state. An authenticated `npx vercel curl /api/health --deployment <preview URL>` reached the application and returned `status: "error"`, `mode: "unavailable"`, `databaseConfigured: false`, `databaseMigrated: false`, and `demoFallbackAllowed: false`.
+
+`npx vercel env ls preview` listed no `DATABASE_URL` for the linked project. It also listed no `APP_ACCESS_PASSWORD` or `SESSION_SECRET`, which the repository's Preview environment example requires for owner sign-in. The missing Preview database variable accounts for `databaseConfigured: false`; no production database setting was inspected or changed. A separate Preview PostgreSQL database, required variables, migrations, and a fresh deployment are needed before a database-backed preview browser test can run. **No deployed preview browser workflow was performed**, and deployment protection was not changed. GitHub's deployment and CI checks are separate from application readiness and manual preview verification.
 
 ## Scope and disposition
 
