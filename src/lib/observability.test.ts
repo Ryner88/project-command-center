@@ -51,6 +51,43 @@ describe("operation monitoring", () => {
     expect(response.headers.get("x-request-id")).toBe("request-503");
   });
 
+  it("preserves malformed handled JSON errors and their status", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const route = observedRoute(
+      "test.malformed",
+      async () =>
+        new Response("not valid JSON", {
+          status: 503,
+          headers: { "content-type": "application/json" }
+        })
+    );
+    const response = await route(
+      new NextRequest("http://localhost/api/test", { headers: { "x-request-id": "request-bad" } })
+    );
+
+    expect(response.status).toBe(503);
+    await expect(response.text()).resolves.toBe("not valid JSON");
+    expect(response.headers.get("x-request-id")).toBe("request-bad");
+    expect(getReliabilitySnapshot().failed).toBe(1);
+  });
+
+  it("preserves JSON array errors without changing their shape", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const route = observedRoute("test.array", async () =>
+      NextResponse.json([{ error: "Service unavailable." }], { status: 503 })
+    );
+    const response = await route(
+      new NextRequest("http://localhost/api/test", { headers: { "x-request-id": "request-array" } })
+    );
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual([{ error: "Service unavailable." }]);
+    expect(response.headers.get("x-request-id")).toBe("request-array");
+    expect(getReliabilitySnapshot().failed).toBe(1);
+  });
+
   it("retries a safe read and returns after recovery", async () => {
     const work = vi.fn().mockRejectedValueOnce(new Error("temporary")).mockResolvedValue("ready");
     await expect(retryRead(work)).resolves.toBe("ready");

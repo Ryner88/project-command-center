@@ -65,11 +65,19 @@ export function observedRoute<TArgs extends unknown[]>(
         response.status >= 500 &&
         response.headers.get("content-type")?.includes("application/json")
       ) {
-        const body = (await response.clone().json()) as unknown;
-        if (body && typeof body === "object" && !("requestId" in body)) {
+        let body: unknown;
+        try {
+          body = await response.clone().json();
+        } catch {
+          body = undefined;
+        }
+        if (body && typeof body === "object" && !Array.isArray(body) && !("requestId" in body)) {
+          const headers = new Headers(response.headers);
+          headers.delete("content-length");
+          headers.delete("etag");
           response = NextResponse.json(
             { ...body, requestId: context.requestId },
-            { status: response.status, headers: response.headers }
+            { status: response.status, headers }
           );
         }
       }
