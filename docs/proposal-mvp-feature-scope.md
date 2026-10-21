@@ -122,7 +122,6 @@ Milestones are logical deliverable groups, not calendar dates or a claim that al
 - [ ] Migrations and backup/restore checks pass.
 - [ ] The single-owner identity and mock briefing source limitations are disclosed in release materials.
 - [ ] Optional and excluded features are not presented as required MVP deliverables.
-- [ ] The client-facing proposal includes or expressly incorporates this scope and any additions have documented approval.
 
 Detailed performance, accessibility, security, defect, and acceptance ownership thresholds remain to be defined under [#25](https://github.com/Ryner88/project-command-center/issues/25).
 
