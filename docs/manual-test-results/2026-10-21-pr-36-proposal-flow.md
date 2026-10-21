@@ -71,32 +71,32 @@ The branch later received fixes for the HTML download behavior, filtered empty s
 
 Commit `76ca61f` deployed to protected Preview as `dpl_7e1vDNQU3SFYTnL4GiKESStWTQjy` at `https://project-command-center-a77vm1id9-ryner88s-projects.vercel.app`. Vercel reported `READY`, authenticated `/api/health` returned database mode with migrations present and demo fallback disabled, and the PR's quality, migrations, build, and end-to-end CI checks passed.
 
-The owner reports reviewing an HTML export and matching PDF generated during the PR #36 Preview retest. The named files were not available in this workspace for independent inspection, so the following results are attributed to that review. No client-named export is committed to this repository.
+The owner identified the matching HTML and PDF files in local Windows Downloads. Both were read directly: HTML content was parsed as a document and the six-page PDF was extracted with `pdftotext`. The HTML is 23,950 bytes (SHA-256 `fde0eb8b2857b9c5a2873fa846b77553856fc7ee824dc42462a6418762dba396`); the PDF is 95,286 bytes (SHA-256 `ed8f704cd5c8e5044c61eaac33e6845445ba1970385e839c37b8ae1ee39d9456`). No client-named export is committed to this repository.
 
-| Export check           | Owner-reported result                                                          |
-| ---------------------- | ------------------------------------------------------------------------------ |
-| HTML and PDF generated | Passed.                                                                        |
-| Start and deadline     | Both show October 23, 2026 and February 4, 2027.                               |
-| Calculated duration    | Both show 14 weeks, 6 days, matching the 104 elapsed days between those dates. |
-| Milestones             | Both show four contiguous dated phases spanning the selected window.           |
-| Content consistency    | Scope, deliverables, price, and milestone dates agree between HTML and PDF.    |
+| Export check        | Direct inspection result                                                       |
+| ------------------- | ------------------------------------------------------------------------------ |
+| HTML and PDF files  | Present and readable.                                                          |
+| Start and deadline  | Both show October 23, 2026 and February 4, 2027.                               |
+| Calculated duration | Both show 14 weeks, 6 days, matching the 104 elapsed days between those dates. |
+| Milestones          | Both show four contiguous dated phases spanning the selected window.           |
+| Content consistency | All three scope items, all three deliverables, price, and phase titles agree.  |
 
-| Phase                  | Owner-reported dates               |
+| Phase                  | Dates in both exports              |
 | ---------------------- | ---------------------------------- |
 | Discovery and planning | October 23–November 6, 2026        |
 | Execution and reviews  | November 7–December 21, 2026       |
 | QA and final revisions | December 22, 2026–January 20, 2027 |
 | Handoff and closeout   | January 21–February 4, 2027        |
 
-The reported dates were independently checked arithmetically: the endpoints are 104 elapsed days apart, and the four phases are contiguous with no gaps. This calculation does not authenticate the uploaded files or their deployment of origin.
+The dates were checked arithmetically: the endpoints are 104 elapsed days apart, and the four phases are contiguous with no gaps. The PDF's line wrapping splits some phase ranges across lines, but their dates match the HTML.
 
 The request mentions obtaining a quote before the following week's board review, while implementation ends in February 2027. These may refer to different milestones, but the proposal does not explicitly say so. This remains a content review item; the export comparison alone does not determine the intended board-review commitment.
 
-The exports do not establish that their source record came from `76ca61f`, nor do they verify the saved dashboard/detail display, one-click HTML download behavior, or the **Clear filters** empty state. Those browser checks remain open. Proposal creation and status persistence on this Preview have also not been independently evidenced here.
+The exports contain no deployment URL or commit identifier, so they do not establish that their source record came from `76ca61f`. A separately saved Project Command Center page in the same Downloads folder points to the older `bh8acyatf` Preview and shows a different proposal with the original generic timeline; it is historical bug evidence, not provenance for these exports. The exports also do not verify the saved dashboard/detail display, one-click HTML download behavior, or the **Clear filters** empty state. Those browser checks remain open. Proposal creation and status persistence on the new Preview have not been independently evidenced here.
 
 ## Scope and disposition
 
 - Internal application functionality: verified in local demo and local PostgreSQL modes.
-- Deployed preview browser behavior: owner sign-in was reported as passed on `ac9a0d8`; HTML/PDF export consistency was reported as passed during the later retest. One-click download, filtered empty state, saved dashboard/detail consistency, and the remaining workflow checks are unverified.
+- Deployed preview browser behavior: owner sign-in was reported as passed on `ac9a0d8`; local HTML/PDF export content consistency was directly verified. One-click download, filtered empty state, saved dashboard/detail consistency, and the remaining workflow checks are unverified.
 - Acme dashboard feature inventory and real-time reporting: still open in #22 and #23, pending client-facing approval.
 - No client analytics dashboard feature is validated by this proposal-management test.
