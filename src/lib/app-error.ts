@@ -24,15 +24,9 @@ export function getErrorPayload(
     };
   }
 
-  if (error instanceof Error) {
-    return {
-      status: 500,
-      body: { error: error.message || fallbackMessage }
-    };
+  if (error && typeof error === "object" && "name" in error && error.name === "ZodError") {
+    return { status: 400, body: { error: "The request contains invalid values." } };
   }
 
-  return {
-    status: 500,
-    body: { error: fallbackMessage }
-  };
+  return { status: 500, body: { error: fallbackMessage } };
 }

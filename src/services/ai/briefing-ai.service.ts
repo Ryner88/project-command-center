@@ -2,9 +2,7 @@ import { getOpenAIClient } from "@/lib/openai";
 import { dailyBriefingPrompt } from "@/prompts/daily-briefing";
 import type { BriefingItem, BriefingSummary } from "@/types/briefing";
 
-export async function generateBriefingSummary(
-  items: BriefingItem[]
-): Promise<BriefingSummary> {
+export async function generateBriefingSummary(items: BriefingItem[]): Promise<BriefingSummary> {
   if (!process.env.OPENAI_API_KEY) {
     return buildFallbackSummary(items);
   }
@@ -41,8 +39,7 @@ export async function generateBriefingSummary(
 
     return {
       title:
-        parsed.title ??
-        "Your day centers on live client conversations and proposal follow-up.",
+        parsed.title ?? "Your day centers on live client conversations and proposal follow-up.",
       body: parsed.body ?? buildFallbackSummary(items).body
     };
   } catch {

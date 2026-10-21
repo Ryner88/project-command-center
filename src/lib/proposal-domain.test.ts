@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  buildProposalDraft,
-  containsWebsiteLanguageForTesting
-} from "@/lib/proposal-domain";
+import { buildProposalDraft, containsWebsiteLanguageForTesting } from "@/lib/proposal-domain";
 
 const samples = [
   {
@@ -66,13 +63,17 @@ describe("proposal domain drafting", () => {
     const schoolDraft = buildProposalDraft(samples[2]);
     const medicalDraft = buildProposalDraft(samples[3]);
 
-    expect(schoolDraft.deliverables.join(" ")).toMatch(/administrators|educators|students|guardians/i);
+    expect(schoolDraft.deliverables.join(" ")).toMatch(
+      /administrators|educators|students|guardians/i
+    );
     expect(schoolDraft.deliverables.join(" ")).toMatch(/accessible|WCAG/i);
     expect(schoolDraft.assumptions.join(" ")).toMatch(/privacy/i);
     expect(schoolDraft.risks.join(" ")).toMatch(/calendar/i);
 
     expect(medicalDraft.risks.join(" ")).toMatch(/review flag/i);
     expect(medicalDraft.deliverables.join(" ")).toMatch(/privacy|security/i);
-    expect(medicalDraft.assumptions.join(" ")).toMatch(/does not make compliance certification claims/i);
+    expect(medicalDraft.assumptions.join(" ")).toMatch(
+      /does not make compliance certification claims/i
+    );
   });
 });

@@ -5,10 +5,17 @@ import { PROPOSAL_DOMAINS } from "@/lib/proposal-domain";
 export const proposalGenerationSchema = z
   .object({
     proposalSeedId: z.string().optional(),
+    projectId: z.string().optional(),
     title: z.string().min(1).optional(),
     clientName: z.string().min(1).optional(),
-    startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-    dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    startDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
+    dueDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
     summary: z.string().min(1).optional(),
     projectType: z.string().min(1).optional(),
     projectDomain: z.enum(PROPOSAL_DOMAINS).optional(),
@@ -71,4 +78,15 @@ export const proposalGenerationSchema = z
 
 export const proposalStatusSchema = z.object({
   status: z.enum(["DRAFT", "IN_REVIEW", "SENT", "WON", "LOST"])
+});
+export const proposalEditSchema = z.object({
+  title: z.string().trim().min(1).max(240),
+  summary: z.string().trim().min(1).max(10000),
+  priceRange: z.string().trim().min(1).max(120),
+  timeline: z.string().trim().max(500).optional(),
+  scope: z.array(z.string().trim().min(1)).max(50),
+  deliverables: z.array(z.string().trim().min(1)).max(50),
+  taskBreakdown: z.array(z.string().trim().min(1)).max(50),
+  risks: z.array(z.string().trim().min(1)).max(50),
+  assumptions: z.array(z.string().trim().min(1)).max(50)
 });

@@ -4,10 +4,7 @@ import { fetchImportantEmails } from "@/services/integrations/gmail.service";
 import type { BriefingItem, DailyBriefing } from "@/types/briefing";
 
 export async function getTodayBriefing(): Promise<DailyBriefing> {
-  const [events, emails] = await Promise.all([
-    fetchCalendarEvents(),
-    fetchImportantEmails()
-  ]);
+  const [events, emails] = await Promise.all([fetchCalendarEvents(), fetchImportantEmails()]);
 
   const meetingsToday = events.length;
   const emailsNeedingProposal = emails.filter((email) => email.requiresProposal).length;

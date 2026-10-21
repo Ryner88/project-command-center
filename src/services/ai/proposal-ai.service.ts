@@ -33,10 +33,7 @@ export async function generateProposalDraft(input: ProposalGenerationInput) {
           role: "user",
           content: JSON.stringify({
             ...input,
-            promptContext: buildProposalPromptContext(
-              input.projectDomain,
-              input.projectDomainOther
-            )
+            promptContext: buildProposalPromptContext(input.projectDomain, input.projectDomainOther)
           })
         }
       ]
@@ -58,45 +55,35 @@ export async function generateProposalDraft(input: ProposalGenerationInput) {
       assumptions?: string[];
       priceRange?: string;
     };
-    return sanitizeProposalDraft({
-      summary:
-        parsed.summary ??
-        `Proposal for ${input.clientName}: ${input.summary}`,
-      scope:
-        parsed.scope && parsed.scope.length > 0
-          ? parsed.scope
-          : fallback.scope,
-      deliverables:
-        parsed.deliverables && parsed.deliverables.length > 0
-          ? parsed.deliverables
-          : fallback.deliverables,
-      taskBreakdown:
-        parsed.taskBreakdown && parsed.taskBreakdown.length > 0
-          ? parsed.taskBreakdown
-          : fallback.taskBreakdown,
-      timeline: parsed.timeline ?? "4-6 weeks",
-      risks:
-        parsed.risks && parsed.risks.length > 0
-          ? parsed.risks
-          : fallback.risks,
-      assumptions:
-        parsed.assumptions && parsed.assumptions.length > 0
-          ? parsed.assumptions
-          : fallback.assumptions,
-      priceRange: parsed.priceRange ?? fallback.priceRange
-    }, input as RequiredDraftInput);
+    return sanitizeProposalDraft(
+      {
+        summary: parsed.summary ?? `Proposal for ${input.clientName}: ${input.summary}`,
+        scope: parsed.scope && parsed.scope.length > 0 ? parsed.scope : fallback.scope,
+        deliverables:
+          parsed.deliverables && parsed.deliverables.length > 0
+            ? parsed.deliverables
+            : fallback.deliverables,
+        taskBreakdown:
+          parsed.taskBreakdown && parsed.taskBreakdown.length > 0
+            ? parsed.taskBreakdown
+            : fallback.taskBreakdown,
+        timeline: parsed.timeline ?? "4-6 weeks",
+        risks: parsed.risks && parsed.risks.length > 0 ? parsed.risks : fallback.risks,
+        assumptions:
+          parsed.assumptions && parsed.assumptions.length > 0
+            ? parsed.assumptions
+            : fallback.assumptions,
+        priceRange: parsed.priceRange ?? fallback.priceRange
+      },
+      input as RequiredDraftInput
+    );
   } catch {
     return fallback;
   }
 }
 
-type RequiredDraftInput = Required<
-  Pick<ProposalGenerationInput, "clientName" | "summary">
-> &
-  Pick<
-    ProposalGenerationInput,
-    "projectType" | "projectDomain" | "projectDomainOther"
-  >;
+type RequiredDraftInput = Required<Pick<ProposalGenerationInput, "clientName" | "summary">> &
+  Pick<ProposalGenerationInput, "projectType" | "projectDomain" | "projectDomainOther">;
 
 function buildFallbackDraft(input: ProposalGenerationInput) {
   return buildProposalDraft(input as RequiredDraftInput);

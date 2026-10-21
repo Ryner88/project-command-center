@@ -3,14 +3,12 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import {
-  proposalDomainOptions,
-  type ProposalDomain
-} from "@/lib/proposal-domain";
+import { proposalDomainOptions, type ProposalDomain } from "@/lib/proposal-domain";
 import { validateProposalDeadline } from "@/lib/proposal-schedule";
 
 type ProposalGeneratorFormProps = {
   proposalSeedId?: string;
+  projectId?: string;
   initialTitle: string;
   initialClientName: string;
   initialStartDate?: string;
@@ -29,6 +27,7 @@ type ApiErrorResponse = {
 
 export function ProposalGeneratorForm({
   proposalSeedId,
+  projectId,
   initialTitle,
   initialClientName,
   initialStartDate = "",
@@ -60,6 +59,7 @@ export function ProposalGeneratorForm({
   function buildPayload() {
     return {
       proposalSeedId: proposalSeedId || undefined,
+      projectId: projectId || undefined,
       title: readOptionalField(title),
       clientName: readOptionalField(clientName),
       startDate: readOptionalField(startDate),
@@ -67,9 +67,7 @@ export function ProposalGeneratorForm({
       projectType: readOptionalField(projectType),
       projectDomain: readOptionalField(projectDomain) as ProposalDomain | undefined,
       projectDomainOther:
-        projectDomain === "OTHER"
-          ? readOptionalField(projectDomainOther)
-          : undefined,
+        projectDomain === "OTHER" ? readOptionalField(projectDomainOther) : undefined,
       summary: readOptionalField(summary),
       rawRequest: readOptionalField(rawRequest)
     };
@@ -136,7 +134,7 @@ export function ProposalGeneratorForm({
             setError(
               result?.details?.length
                 ? `${result.error ?? "Proposal generation failed."} ${result.details.join(" ")}`
-                : result?.error ?? "Proposal generation failed."
+                : (result?.error ?? "Proposal generation failed.")
             );
             return;
           }

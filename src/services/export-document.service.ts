@@ -48,9 +48,7 @@ export async function getProposalPdfDocument(id: string) {
     | null = null;
 
   try {
-    browser = process.env.VERCEL
-      ? await launchVercelChromium()
-      : await launchLocalChromium();
+    browser = process.env.VERCEL ? await launchVercelChromium() : await launchLocalChromium();
 
     const page = await browser.newPage();
     await page.setContent(renderProposalHtml(proposal), {
@@ -113,7 +111,7 @@ export function renderProposalHtml(proposal: Awaited<ReturnType<typeof getPropos
     : null;
   const displayTimeline = schedule
     ? `${formatDuration(schedule.totalDays)} delivery plan`
-    : proposal.timeline ?? "To be confirmed";
+    : (proposal.timeline ?? "To be confirmed");
   const executiveSummary = buildExecutiveSummary(proposal, schedule);
   const scopeNarrative = buildScopeNarrative(proposal);
   const timelineNarrative = buildTimelineNarrative(proposal, schedule);
@@ -609,12 +607,16 @@ export function renderProposalHtml(proposal: Awaited<ReturnType<typeof getPropos
                 <span class="kpi-label">Estimated Duration</span>
                 <div class="kpi-value">${escapeHtml(displayTimeline)}</div>
               </article>
-              ${hasDeadline ? `
+              ${
+                hasDeadline
+                  ? `
                 <article class="kpi">
                   <span class="kpi-label">Deadline</span>
                   <div class="kpi-value">${escapeHtml(formattedDeadline ?? "")}</div>
                 </article>
-              ` : ""}
+              `
+                  : ""
+              }
               <article class="kpi">
                 <span class="kpi-label">Deliverables</span>
                 <div class="kpi-value">${escapeHtml(String(deliverableCount))}</div>
@@ -668,13 +670,15 @@ export function renderProposalHtml(proposal: Awaited<ReturnType<typeof getPropos
                     <p>${escapeHtml(timelineNarrative)}</p>
                   </div>
                   <ol class="timeline-list">
-                    ${schedule
-                      ? schedule.phases
-                          .map((phase) => renderScheduledTimelineItem(phase))
-                          .join("")
-                      : proposal.taskBreakdown
-                          .map((item, index) => renderTimelineItem(item, index))
-                          .join("")}
+                    ${
+                      schedule
+                        ? schedule.phases
+                            .map((phase) => renderScheduledTimelineItem(phase))
+                            .join("")
+                        : proposal.taskBreakdown
+                            .map((item, index) => renderTimelineItem(item, index))
+                            .join("")
+                    }
                   </ol>
                 </section>
               </section>
@@ -765,11 +769,7 @@ function renderTimelineItem(item: string, index: number) {
   `;
 }
 
-function renderScheduledTimelineItem(phase: {
-  title: string;
-  detail: string;
-  rangeLabel: string;
-}) {
+function renderScheduledTimelineItem(phase: { title: string; detail: string; rangeLabel: string }) {
   return `
     <li class="timeline-item">
       <div class="timeline-phase">${escapeHtml(phase.rangeLabel)}</div>
@@ -804,14 +804,12 @@ function buildExecutiveSummary(
   const phaseLabel = detectPhaseLabel(proposal);
   const durationLabel = schedule
     ? `${formatDuration(schedule.totalDays)} dated delivery plan`
-    : proposal.timeline ?? "a timeline to be confirmed";
+    : (proposal.timeline ?? "a timeline to be confirmed");
 
   return `${summary} This ${phaseLabel.toLowerCase()} is structured around ${deliverables} defined deliverable${deliverables === 1 ? "" : "s"}, with delivery planned over ${durationLabel} and commercial scope held within the stated estimate range.`;
 }
 
-function buildScopeNarrative(
-  proposal: NonNullable<Awaited<ReturnType<typeof getProposalById>>>
-) {
+function buildScopeNarrative(proposal: NonNullable<Awaited<ReturnType<typeof getProposalById>>>) {
   const scopeCount = proposal.scope.length;
   const deliverableCount = proposal.deliverables.length;
 
@@ -909,15 +907,11 @@ function deriveRiskLevel(risks: string[]) {
   return { label: "Low", tone: "low" as const };
 }
 
-function deriveProjectLabel(
-  proposal: NonNullable<Awaited<ReturnType<typeof getProposalById>>>
-) {
+function deriveProjectLabel(proposal: NonNullable<Awaited<ReturnType<typeof getProposalById>>>) {
   return detectPhaseLabel(proposal);
 }
 
-function detectPhaseLabel(
-  proposal: NonNullable<Awaited<ReturnType<typeof getProposalById>>>
-) {
+function detectPhaseLabel(proposal: NonNullable<Awaited<ReturnType<typeof getProposalById>>>) {
   const corpus = `${proposal.title} ${proposal.summary}`.toLowerCase();
 
   if (corpus.includes("phase 1") || corpus.includes("phase one")) {

@@ -33,15 +33,15 @@ export default async function ProposalsPage({ searchParams }: ProposalsPageProps
       params.status && params.status !== "ALL" ? proposal.status === params.status : true
     )
     .filter(({ proposal }) =>
-      params.domain && params.domain !== "ALL"
-        ? proposal.projectDomain === params.domain
-        : true
+      params.domain && params.domain !== "ALL" ? proposal.projectDomain === params.domain : true
     )
     .sort((left, right) => getProposalAttentionScore(right) - getProposalAttentionScore(left));
   const pipelineCounts = countByStatus(proposalCards.map(({ proposal }) => proposal));
   const dueSoonCount = proposalCards.filter((card) => isDueSoon(card.proposal)).length;
   const exportedCount = proposalCards.filter((card) => card.exports.length > 0).length;
-  const readyToSendCount = proposalCards.filter((card) => getNextStep(card) === "Ready to send").length;
+  const readyToSendCount = proposalCards.filter(
+    (card) => getNextStep(card) === "Ready to send"
+  ).length;
   const needsAttentionCards = filteredCards.filter((card) => getProposalAttentionScore(card) >= 60);
   const domainOptions = Array.from(
     new Set(
@@ -57,8 +57,8 @@ export default async function ProposalsPage({ searchParams }: ProposalsPageProps
         <span className="eyebrow">Proposal Dashboard</span>
         <h1>Track draft, sent, and won work in one place.</h1>
         <p>
-          The dashboard anchors the proposal lifecycle while the generator lives
-          under the same domain.
+          The dashboard anchors the proposal lifecycle while the generator lives under the same
+          domain.
         </p>
         <Link className="cta" href="/proposals/new">
           Create new proposal
@@ -145,9 +145,7 @@ export default async function ProposalsPage({ searchParams }: ProposalsPageProps
                 <div className="row spread start">
                   <div className="stack">
                     <strong>{card.proposal.title}</strong>
-                    <p className="muted">
-                      {buildHealthLine(card)}
-                    </p>
+                    <p className="muted">{buildHealthLine(card)}</p>
                   </div>
                   <div className="attention-badges">
                     {getAttentionBadges(card).map((badge) => (
@@ -203,7 +201,8 @@ export default async function ProposalsPage({ searchParams }: ProposalsPageProps
             </Link>
           </div>
           <p className="muted dashboard-filter-summary">
-            Showing {filteredCards.length} of {proposalCards.length} proposals. Exported: {exportedCount}.
+            Showing {filteredCards.length} of {proposalCards.length} proposals. Exported:{" "}
+            {exportedCount}.
           </p>
         </form>
         <div className="list">
@@ -228,13 +227,16 @@ export default async function ProposalsPage({ searchParams }: ProposalsPageProps
                       ))}
                     </div>
                   </div>
-                  <span className="proposal-next-step">Next: {getNextStep({ proposal, exports })}</span>
+                  <span className="proposal-next-step">
+                    Next: {getNextStep({ proposal, exports })}
+                  </span>
                 </div>
                 {params.generated === proposal.id ? (
                   <div className="card proposal-highlight-card">
                     <strong>Newly generated proposal</strong>
                     <p className="muted">
-                      Review this draft, move it into review, then export HTML or PDF directly from the actions below.
+                      Review this draft, move it into review, then export HTML or PDF directly from
+                      the actions below.
                     </p>
                   </div>
                 ) : null}
@@ -287,10 +289,7 @@ export default async function ProposalsPage({ searchParams }: ProposalsPageProps
                 </div>
               </div>
               <div className="stack">
-                <ProposalCardActions
-                  currentStatus={proposal.status}
-                  proposalId={proposal.id}
-                />
+                <ProposalCardActions currentStatus={proposal.status} proposalId={proposal.id} />
                 <div className="action-row">
                   <Link className="ghost-button" href={`/proposals/${proposal.id}`}>
                     Open detail view
@@ -301,21 +300,27 @@ export default async function ProposalsPage({ searchParams }: ProposalsPageProps
                 </div>
                 {exports.length > 0 && (
                   <p className="muted">
-                    Latest export:{" "}
-                    <a href={exports[0].filePath}>
-                      {exports[0].fileName}
-                    </a>
+                    Latest export: <a href={exports[0].filePath}>{exports[0].fileName}</a>
                   </p>
                 )}
               </div>
             </div>
           ))}
           {filteredCards.length === 0 ? (
-            <div className="card">
-              <strong>No proposals match the current filters.</strong>
+            <div className="empty-state">
+              <strong>
+                {proposalCards.length
+                  ? "No proposals match the current filters"
+                  : "No proposals yet"}
+              </strong>
               <p className="muted">
-                Clear the filters or create a new proposal to repopulate the dashboard.
+                {proposalCards.length
+                  ? "Clear or change the filters to see more proposals."
+                  : "Create the first proposal from project context, briefing context, or direct input."}
               </p>
+              <Link className="cta" href="/proposals/new">
+                Create the first proposal
+              </Link>
             </div>
           ) : null}
         </div>
@@ -324,9 +329,10 @@ export default async function ProposalsPage({ searchParams }: ProposalsPageProps
   );
 }
 
-type ProposalCard = Awaited<ReturnType<typeof listExportsForProposal>> extends infer T
-  ? { proposal: Proposal; exports: T extends Array<infer Export> ? Export[] : never }
-  : never;
+type ProposalCard =
+  Awaited<ReturnType<typeof listExportsForProposal>> extends infer T
+    ? { proposal: Proposal; exports: T extends Array<infer Export> ? Export[] : never }
+    : never;
 
 function countByStatus(proposals: Proposal[]) {
   return proposals.reduce(

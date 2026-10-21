@@ -1,6 +1,6 @@
 # Production Operating Contract
 
-Last updated: 2026-08-27
+Last updated: 2026-09-19
 
 ## Target
 
@@ -14,7 +14,7 @@ Fully operational means:
 - Deployment, migration, backup, restore, rollback, and monitoring are verified.
 - The application is secure for its chosen exposure model.
 - Demo mode remains available but is isolated, labeled, and resettable.
-- Recruiters can see documented production evidence, not only screenshots.
+- Recruiters can review documented production evidence alongside screenshots.
 
 ```mermaid
 flowchart TD
@@ -28,9 +28,9 @@ flowchart TD
 
 ## Operating Decisions
 
-- Initial production target: single-user, local-first operation.
-- Exposure model: private by default. Authentication remains unnecessary only when access is local or otherwise private.
-- Public writable deployment rule: if PCC is reachable by the public internet and allows mutations, owner authentication and session protection are required before launch.
+- Initial production target: a single-owner workspace.
+- Exposure model: private and authenticated. Production requires the owner password and session secret even when it runs on a private network.
+- Public writable deployment rule: serve the application over HTTPS so its secure owner session cookie remains protected in transit.
 - Production data source: persistent database only.
 - Demo data source: isolated demo store only.
 - Test and development modes may use fixtures, mocks, or local stores, but those paths must not be reachable from production mode.
@@ -53,12 +53,12 @@ flowchart TD
 
 ## Mode Definitions
 
-| Mode | Purpose | Data Source | Demo Fallback |
-| --- | --- | --- | --- |
-| Production | Real single-user operation | Persistent database | Never allowed |
-| Demo | Recruiter-safe walkthrough | Isolated demo store | Native mode, labeled and resettable |
-| Test | Automated validation | Test database, mocks, or fixtures | Allowed only inside tests |
-| Development | Local implementation work | Local database or demo store | Explicit only |
+| Mode        | Purpose                    | Data Source                       | Demo Fallback                       |
+| ----------- | -------------------------- | --------------------------------- | ----------------------------------- |
+| Production  | Real single-user operation | Persistent database               | Never allowed                       |
+| Demo        | Recruiter-safe walkthrough | Isolated demo store               | Native mode, labeled and resettable |
+| Test        | Automated validation       | Test database, mocks, or fixtures | Allowed only inside tests           |
+| Development | Local implementation work  | Local database or demo store      | Explicit only                       |
 
 ## Phase 0: Production Contract And Architecture
 
@@ -138,6 +138,17 @@ Exit gate:
 
 ## Phase 3: Complete Real Workflows
 
+Implementation branch: `phase-3-complete-real-workflows`.
+
+Verification completed on 2026-09-19 against a clean PostgreSQL database:
+
+- Created, edited, prioritized, filtered, searched, archived, and recovered projects through the UI.
+- Created, ordered, completed, and reopened project tasks.
+- Generated a proposal from saved project context and preserved the project relationship.
+- Edited the saved proposal, created version history, reopened the detail page, and downloaded the HTML export.
+- The scripted browser test covers the project, task, proposal, version, export, search, and archive path.
+- The five-migration clean install and upgrade test passes against PostgreSQL.
+
 Work:
 
 - Project creation, editing, status changes, prioritization, archiving, search, and filtering.
@@ -155,6 +166,19 @@ Exit gate:
 - No core workflow depends on a fixture or hardcoded success response.
 
 ## Phase 4: Access And Security Boundary
+
+Implementation branch: `phase-4-access-security`.
+
+Verification completed on 2026-09-19 against a fresh PostgreSQL database:
+
+- Anonymous page requests redirect to sign-in, and anonymous API requests return `401`.
+- Incorrect passwords fail without creating a session. Correct passwords create a signed, HTTP-only, same-site session.
+- Cross-origin mutations return `403` before reaching an application route.
+- Security headers block framing, outside scripts, and unnecessary browser permissions.
+- Project creation writes an owner-scoped audit event, and sign-out removes access.
+- The dependency scan reports zero vulnerabilities.
+- The six-migration clean install and upgrade test passes against PostgreSQL.
+- Unit tests, the standalone type check, the production build, and the browser security test pass.
 
 Work:
 
@@ -175,6 +199,18 @@ Exit gate:
 
 ## Phase 5: Reliability And Operations
 
+Implementation branch: `phase-5-reliability-operations`.
+
+Verification completed on 2026-09-19 with a disposable PostgreSQL database:
+
+- Correlated JSON logs record request IDs, operation IDs, status codes, and durations without request bodies or client content.
+- Liveness stayed available while PostgreSQL was stopped, readiness returned `503`, and database-backed work failed with a safe response and request ID.
+- Readiness and database-backed work recovered after PostgreSQL restarted without restarting the application.
+- Malformed project input returned `400` and the diagnostics endpoint reported uptime, build, readiness, and the last failed operation.
+- A deliberately failed migration transaction left no partial table behind.
+- A custom-format backup restored into a clean database with matching user, project, and audit-event counts.
+- The manual browser test created and reopened a real recovery-drill project, then verified authenticated diagnostics.
+
 Work:
 
 - Add structured logs with request and operation identifiers.
@@ -192,6 +228,20 @@ Exit gate:
 
 ## Phase 6: CI/CD And Release Controls
 
+Implementation branch: `phase-6-release-controls`.
+
+Verification completed on 2026-09-19 with a disposable PostgreSQL database and a local release candidate:
+
+- Formatting, linting, type checking, 24 unit and integration tests, the dependency scan, and the production build passed.
+- All six migrations passed against a clean PostgreSQL database, including upgrade, constraint, and rollback checks.
+- The Phase 3 workflow, Phase 4 security test, and Phase 5 reliability test passed in sequence with owner access enabled.
+- The release smoke test verified liveness, readiness, authenticated project reads, diagnostics, and build ID `phase6-manual-build`.
+- A smoke test with the wrong build ID exited with an error, which confirms that the promotion job stops before moving the alias.
+- Manual browser testing confirmed sign-in and diagnostics. Diagnostics reported the expected build ID and a ready database.
+- GitHub issue #7 records the failed first run and the test fixes: canonical localhost use, deterministic sign-in, sequential execution, and waiting for archive writes before navigation.
+
+CI now checks formatting, linting, types, tests, dependencies, clean-database migrations, browser workflows, and the production build. Preview and production have separate environments. The release workflow builds and checks a staged Production deployment before moving the production alias. The rollback workflow can restore a recorded deployment.
+
 Work:
 
 - Gate changes on formatting, linting, type checking, unit tests, integration tests, end-to-end tests, and production builds.
@@ -208,6 +258,18 @@ Exit gate:
 - The previous working release can be restored.
 
 ## Phase 7: Production UX And Portfolio Evidence
+
+Implementation branch: `phase-7-production-ux-portfolio`.
+
+Verification completed on 2026-09-20 in an isolated local demo workspace:
+
+- Home, project, and populated proposal pages passed the automated WCAG A and AA scan with no serious or critical violations.
+- Keyboard, 390-pixel mobile layout, and reduced-motion behavior were checked.
+- Three final warm proposal reloads had a 2,171 ms median load time against a 3-second target.
+- The workspace opened empty and loaded sample records only after the explicit demo action.
+- Manual testing covered the empty dashboard, demo loading, populated dashboard, and saved proposal detail.
+- Portfolio evidence includes desktop and mobile screenshots plus a short WebM workflow recording.
+- README now covers setup, architecture, configuration, modes, testing, operations, and the release flow.
 
 Work:
 

@@ -18,8 +18,7 @@ const workflowSteps = [
   {
     href: "/proposals",
     label: "View dashboard",
-    match: (pathname: string) =>
-      pathname === "/proposals" || /^\/proposals\/[^/]+$/.test(pathname)
+    match: (pathname: string) => pathname === "/proposals" || /^\/proposals\/[^/]+$/.test(pathname)
   },
   {
     href: "/proposals",
@@ -61,6 +60,7 @@ export function WorkflowProgress() {
 
           return (
             <Link
+              aria-current={state === "active" ? "step" : undefined}
               className={`workflow-step workflow-${state}`}
               href={step.href}
               key={step.label}

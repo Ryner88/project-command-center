@@ -1,7 +1,4 @@
-import {
-  isDatabaseConfigured,
-  isDatabaseReady
-} from "@/services/current-user.service";
+import { isDatabaseConfigured, isDatabaseReady } from "@/services/current-user.service";
 
 export type DeploymentHealth = {
   status: "ok" | "degraded" | "error";

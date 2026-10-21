@@ -25,7 +25,11 @@ export async function createProposalSeed(input: ProposalSeedInput): Promise<Prop
     try {
       return mapProposalSeedRecord(await seeds.create(user.id, input));
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002" && input.sourceReference) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002" &&
+        input.sourceReference
+      ) {
         const existing = await seeds.bySource(user.id, input.sourceType, input.sourceReference);
         if (existing) return mapProposalSeedRecord(existing);
       }
@@ -163,9 +167,7 @@ function mapProposalSeedRecord(seed: {
         : undefined),
     projectDomainOther:
       seed.projectDomainOther ??
-      (typeof context.projectDomainOther === "string"
-        ? context.projectDomainOther
-        : undefined),
+      (typeof context.projectDomainOther === "string" ? context.projectDomainOther : undefined),
     summary: seed.summary,
     context
   };

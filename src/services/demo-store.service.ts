@@ -13,6 +13,10 @@ type DemoStore = {
 };
 
 function resolveDemoStoreRoot() {
+  if (process.env.DEMO_STORAGE_ROOT) {
+    return process.env.DEMO_STORAGE_ROOT;
+  }
+
   if (process.env.VERCEL) {
     return path.join("/tmp", "project-command-center");
   }
@@ -24,14 +28,15 @@ function resolveDemoStoreRoot() {
   return process.cwd();
 }
 
-const demoStorePath = path.join(
-  resolveDemoStoreRoot(),
-  "storage",
-  "proposals",
-  "demo-store.json"
-);
+const demoStorePath = path.join(resolveDemoStoreRoot(), "storage", "proposals", "demo-store.json");
 
-const defaultStore: DemoStore = {
+const emptyStore: DemoStore = {
+  proposalSeeds: [],
+  proposals: [],
+  exports: []
+};
+
+const demoWorkspace: DemoStore = {
   proposalSeeds: [
     {
       id: "seed_1",
@@ -93,8 +98,8 @@ const defaultStore: DemoStore = {
   exports: []
 };
 
-function cloneDefaultStore(): DemoStore {
-  return JSON.parse(JSON.stringify(defaultStore)) as DemoStore;
+function cloneStore(store: DemoStore): DemoStore {
+  return JSON.parse(JSON.stringify(store)) as DemoStore;
 }
 
 async function ensureDemoStoreFile() {
@@ -103,11 +108,7 @@ async function ensureDemoStoreFile() {
   try {
     await readFile(demoStorePath, "utf8");
   } catch {
-    await writeFile(
-      demoStorePath,
-      JSON.stringify(cloneDefaultStore(), null, 2),
-      "utf8"
-    );
+    await writeFile(demoStorePath, JSON.stringify(cloneStore(emptyStore), null, 2), "utf8");
   }
 }
 
@@ -120,6 +121,12 @@ export async function readDemoStore(): Promise<DemoStore> {
 export async function writeDemoStore(store: DemoStore) {
   await ensureDemoStoreFile();
   await writeFile(demoStorePath, JSON.stringify(store, null, 2), "utf8");
+}
+
+export async function loadDemoWorkspace() {
+  const store = cloneStore(demoWorkspace);
+  await writeDemoStore(store);
+  return store;
 }
 
 export async function resetDemoStoreForTests() {

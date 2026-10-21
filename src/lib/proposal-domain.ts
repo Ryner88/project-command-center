@@ -68,8 +68,7 @@ const domainLabelMap = proposalDomainOptions.reduce<Record<ProposalDomain, strin
 
 const domainTemplates: Record<ProposalDomain, DomainTemplate> = {
   WEBSITE: {
-    summaryTemplate: (input) =>
-      `Website proposal for ${input.clientName}: ${input.summary}`,
+    summaryTemplate: (input) => `Website proposal for ${input.clientName}: ${input.summary}`,
     scope: [
       "Website discovery, messaging alignment, and content planning",
       "Responsive design, implementation, QA, and launch support",
@@ -128,8 +127,7 @@ const domainTemplates: Record<ProposalDomain, DomainTemplate> = {
     priceRange: "$28,000 - $48,000"
   },
   EDUCATION_SCHOOL: {
-    summaryTemplate: (input) =>
-      `School project proposal for ${input.clientName}: ${input.summary}`,
+    summaryTemplate: (input) => `School project proposal for ${input.clientName}: ${input.summary}`,
     scope: [
       "Discovery across school roles, workflows, and operational constraints",
       "Accessible experience design and implementation aligned to school calendars",
@@ -188,8 +186,7 @@ const domainTemplates: Record<ProposalDomain, DomainTemplate> = {
     priceRange: "$40,000 - $75,000"
   },
   INTERNAL_TOOL: {
-    summaryTemplate: (input) =>
-      `Internal tool proposal for ${input.clientName}: ${input.summary}`,
+    summaryTemplate: (input) => `Internal tool proposal for ${input.clientName}: ${input.summary}`,
     scope: [
       "Workflow discovery, systems mapping, and stakeholder prioritization",
       "Operational tool design, implementation, QA, and rollout support",
@@ -248,8 +245,7 @@ const domainTemplates: Record<ProposalDomain, DomainTemplate> = {
     priceRange: "$35,000 - $60,000"
   },
   OTHER: {
-    summaryTemplate: (input) =>
-      `Project proposal for ${input.clientName}: ${input.summary}`,
+    summaryTemplate: (input) => `Project proposal for ${input.clientName}: ${input.summary}`,
     scope: [
       "Discovery, prioritization, and delivery planning",
       "Design or implementation execution with QA and stakeholder reviews",
@@ -279,10 +275,7 @@ const domainTemplates: Record<ProposalDomain, DomainTemplate> = {
   }
 };
 
-export function getProposalDomainLabel(
-  domain?: ProposalDomain,
-  customDomain?: string
-) {
+export function getProposalDomainLabel(domain?: ProposalDomain, customDomain?: string) {
   if (!domain) {
     return undefined;
   }
@@ -359,14 +352,7 @@ export function inferProposalDomain(input: {
   }
 
   if (
-    includesAny(corpus, [
-      "website",
-      "landing page",
-      "marketing site",
-      "cms",
-      "sitemap",
-      "webflow"
-    ])
+    includesAny(corpus, ["website", "landing page", "marketing site", "cms", "sitemap", "webflow"])
   ) {
     return "WEBSITE";
   }
@@ -390,7 +376,8 @@ export function inferProposalDomain(input: {
 
 export function buildProposalDraft(input: ProposalDraftInput): ProposalDraftSections {
   const projectDomain =
-    input.projectDomain ?? inferProposalDomain({ summary: input.summary, projectType: input.projectType });
+    input.projectDomain ??
+    inferProposalDomain({ summary: input.summary, projectType: input.projectType });
   const template = domainTemplates[projectDomain];
 
   return {
@@ -405,10 +392,7 @@ export function buildProposalDraft(input: ProposalDraftInput): ProposalDraftSect
   };
 }
 
-export function buildProposalPromptContext(
-  domain?: ProposalDomain,
-  customDomain?: string
-) {
+export function buildProposalPromptContext(domain?: ProposalDomain, customDomain?: string) {
   if (!domain) {
     return "";
   }
@@ -453,15 +437,14 @@ export function sanitizeProposalDraft(
 ): ProposalDraftSections {
   const fallback = buildProposalDraft(input);
   const domain =
-    input.projectDomain ?? inferProposalDomain({ summary: input.summary, projectType: input.projectType });
+    input.projectDomain ??
+    inferProposalDomain({ summary: input.summary, projectType: input.projectType });
 
   if (domain === "WEBSITE") {
     return draft;
   }
 
-  const summary = containsWebsiteOnlyLanguage(draft.summary)
-    ? fallback.summary
-    : draft.summary;
+  const summary = containsWebsiteOnlyLanguage(draft.summary) ? fallback.summary : draft.summary;
   const scope = sanitizeStringArray(draft.scope, fallback.scope);
   const deliverables = sanitizeStringArray(draft.deliverables, fallback.deliverables);
   const taskBreakdown = sanitizeStringArray(draft.taskBreakdown, fallback.taskBreakdown);

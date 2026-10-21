@@ -7,7 +7,7 @@ import userEvent from "@testing-library/user-event";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { resetDemoStoreForTests } from "@/services/demo-store.service";
+import { loadDemoWorkspace, resetDemoStoreForTests } from "@/services/demo-store.service";
 
 const push = vi.fn();
 const refresh = vi.fn();
@@ -23,11 +23,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("next/link", () => ({
-  default: ({
-    children,
-    href,
-    ...props
-  }: React.AnchorHTMLAttributes<HTMLAnchorElement>) =>
+  default: ({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) =>
     React.createElement("a", { href, ...props }, children)
 }));
 
@@ -42,9 +38,8 @@ describe("proposal generation flow", () => {
   });
 
   it("submits the form, saves the proposal, redirects, and renders the stored detail view", async () => {
-    const { ProposalGeneratorForm } = await import(
-      "@/components/proposals/proposal-generator-form"
-    );
+    const { ProposalGeneratorForm } =
+      await import("@/components/proposals/proposal-generator-form");
     const { POST } = await import("@/app/api/proposals/generate/route");
 
     vi.stubGlobal(
@@ -70,20 +65,14 @@ describe("proposal generation flow", () => {
     );
 
     await userEvent.type(screen.getByLabelText("Client"), "LedgerLoop");
-    await userEvent.type(
-      screen.getByLabelText("Project type"),
-      "Fintech operations platform"
-    );
+    await userEvent.type(screen.getByLabelText("Project type"), "Fintech operations platform");
     fireEvent.change(screen.getByLabelText("Requested start date"), {
       target: { value: "2026-05-01" }
     });
     fireEvent.change(screen.getByLabelText("Deadline"), {
       target: { value: "2026-06-19" }
     });
-    await userEvent.selectOptions(
-      screen.getByLabelText("Project domain"),
-      "FINANCE"
-    );
+    await userEvent.selectOptions(screen.getByLabelText("Project domain"), "FINANCE");
     await userEvent.type(
       screen.getByLabelText("Working request or source notes"),
       "Build a fintech operations platform for reconciliation workflows, approval routing, and payment operations visibility."
@@ -92,22 +81,18 @@ describe("proposal generation flow", () => {
       screen.getByLabelText("Summary used for generation"),
       "Build a fintech operations platform for reconciliation workflows, approval routing, and payment operations visibility."
     );
-    await userEvent.click(
-      screen.getByRole("button", { name: "Generate proposal" })
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Generate proposal" }));
 
     await waitFor(() => {
-      expect(push).toHaveBeenCalledWith("/proposals/proposal_2");
+      expect(push).toHaveBeenCalledWith("/proposals/proposal_1");
     });
 
     vi.resetModules();
 
-    const { default: ProposalDetailPage } = await import(
-      "@/app/proposals/[id]/page"
-    );
+    const { default: ProposalDetailPage } = await import("@/app/proposals/[id]/page");
 
     const page = await ProposalDetailPage({
-      params: Promise.resolve({ id: "proposal_2" })
+      params: Promise.resolve({ id: "proposal_1" })
     });
     const html = renderToStaticMarkup(page);
 
@@ -151,9 +136,8 @@ describe("proposal generation flow", () => {
   });
 
   it("renders the default demo proposal detail by stable id", async () => {
-    const { default: ProposalDetailPage } = await import(
-      "@/app/proposals/[id]/page"
-    );
+    await loadDemoWorkspace();
+    const { default: ProposalDetailPage } = await import("@/app/proposals/[id]/page");
 
     const page = await ProposalDetailPage({
       params: Promise.resolve({ id: "proposal_1" })
@@ -169,7 +153,6 @@ describe("proposal generation flow", () => {
   it("does not create temporary demo proposals on Vercel without a database", async () => {
     vi.stubEnv("VERCEL", "1");
 
-    const { AppError } = await import("@/lib/app-error");
     const { generateProposal } = await import("@/services/proposal.service");
 
     await expect(
@@ -177,13 +160,12 @@ describe("proposal generation flow", () => {
         clientName: "LedgerLoop",
         projectType: "Fintech operations platform",
         projectDomain: "FINANCE",
-        summary:
-          "Build a fintech operations platform for reconciliation workflows."
+        summary: "Build a fintech operations platform for reconciliation workflows."
       })
     ).rejects.toMatchObject({
       status: 503,
       message:
         "Proposal persistence is not configured for this deployment. Set DATABASE_URL and run migrations before generating proposals."
-    } satisfies Partial<InstanceType<typeof AppError>>);
+    } satisfies { status?: number; message?: string });
   });
 });

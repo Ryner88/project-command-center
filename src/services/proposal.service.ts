@@ -1,19 +1,15 @@
-import { proposals, seeds, transaction } from "@/repositories/persistence.repository";
+import { projects, proposals, seeds, transaction } from "@/repositories/persistence.repository";
 import { AppError } from "@/lib/app-error";
 import { isValidDateInput } from "@/lib/date";
 import { validateProposalDeadline } from "@/lib/proposal-schedule";
-import {
-  getProposalDomainLabel,
-  inferProposalDomain
-} from "@/lib/proposal-domain";
+import { getProposalDomainLabel, inferProposalDomain } from "@/lib/proposal-domain";
 import { getDataMode, isDatabaseMode } from "@/services/data-mode.service";
 import { readDemoStore, writeDemoStore } from "@/services/demo-store.service";
-import {
-  ensureCurrentUser,
-  isDatabaseReady
-} from "@/services/current-user.service";
+import { ensureCurrentUser, isDatabaseReady } from "@/services/current-user.service";
 import type { ProposalStatus } from "@/types/proposal";
 import type { ProposalGenerationInput, Proposal } from "@/types/proposal";
+import type { z } from "zod";
+import type { proposalEditSchema } from "@/schemas/proposal";
 
 import { createProposalSeed, getProposalSeedById } from "@/services/proposal-seed.service";
 import { generateProposalDraft } from "@/services/ai/proposal-ai.service";
@@ -44,6 +40,7 @@ export async function generateProposal(input: ProposalGenerationInput): Promise<
   const proposal: Proposal = {
     id: "",
     proposalSeedId: normalized.proposalSeedId,
+    projectId: input.projectId,
     title: normalized.title,
     clientName: normalized.clientName,
     projectType: normalized.projectType,
@@ -70,51 +67,71 @@ export async function generateProposal(input: ProposalGenerationInput): Promise<
   if (databaseReady) {
     const user = await ensureCurrentUser();
     const created = await transaction(async (tx) => {
+      if (input.projectId && !(await projects.get(user.id, input.projectId, tx))) {
+        throw new AppError(404, "Project was not found.");
+      }
       let proposalSeedId = proposal.proposalSeedId;
       if (proposalSeedId) {
-        if (!await seeds.get(user.id, proposalSeedId, tx)) {
+        if (!(await seeds.get(user.id, proposalSeedId, tx))) {
           throw new AppError(404, `Proposal seed ${proposalSeedId} was not found.`);
         }
       } else {
-        const seed = await seeds.create(user.id, {
-          sourceType: "MANUAL", clientName: normalized.clientName,
-          projectType: normalized.projectType, projectDomain: normalized.projectDomain,
-          projectDomainOther: normalized.projectDomainOther, summary: normalized.summary,
-          context: normalized.rawRequest ? { rawRequest: normalized.rawRequest } : {}
-        }, tx);
+        const seed = await seeds.create(
+          user.id,
+          {
+            sourceType: "MANUAL",
+            clientName: normalized.clientName,
+            projectType: normalized.projectType,
+            projectDomain: normalized.projectDomain,
+            projectDomainOther: normalized.projectDomainOther,
+            summary: normalized.summary,
+            context: normalized.rawRequest ? { rawRequest: normalized.rawRequest } : {}
+          },
+          tx
+        );
         proposalSeedId = seed.id;
       }
-      return proposals.create(user.id, {
-        proposalSeedId,
-        title: proposal.title,
-        clientName: proposal.clientName,
-        projectType: proposal.projectType,
-        projectDomain: proposal.projectDomain,
-        projectDomainOther: proposal.projectDomainOther,
-        status: proposal.status,
-        startDate: proposal.startDate,
-        dueDate: proposal.dueDate,
-        summary: proposal.summary,
-        scope: proposal.scope,
-        deliverables: proposal.deliverables,
-        taskBreakdown: proposal.taskBreakdown,
-        timeline: proposal.timeline,
-        risks: proposal.risks,
-        assumptions: proposal.assumptions,
-        priceRange: proposal.priceRange,
-        sourceLabel: proposal.sourceLabel
-      }, tx);
+      return proposals.create(
+        user.id,
+        {
+          proposalSeedId,
+          projectId: input.projectId,
+          title: proposal.title,
+          clientName: proposal.clientName,
+          projectType: proposal.projectType,
+          projectDomain: proposal.projectDomain,
+          projectDomainOther: proposal.projectDomainOther,
+          status: proposal.status,
+          startDate: proposal.startDate,
+          dueDate: proposal.dueDate,
+          summary: proposal.summary,
+          scope: proposal.scope,
+          deliverables: proposal.deliverables,
+          taskBreakdown: proposal.taskBreakdown,
+          timeline: proposal.timeline,
+          risks: proposal.risks,
+          assumptions: proposal.assumptions,
+          priceRange: proposal.priceRange,
+          sourceLabel: proposal.sourceLabel
+        },
+        tx
+      );
     });
 
     return mapProposalRecord(created);
   }
 
-  const demoSeed = normalized.sourceSeed ?? await createProposalSeed({
-    sourceType: "MANUAL", clientName: normalized.clientName,
-    projectType: normalized.projectType, projectDomain: normalized.projectDomain,
-    projectDomainOther: normalized.projectDomainOther, summary: normalized.summary,
-    context: normalized.rawRequest ? { rawRequest: normalized.rawRequest } : {}
-  });
+  const demoSeed =
+    normalized.sourceSeed ??
+    (await createProposalSeed({
+      sourceType: "MANUAL",
+      clientName: normalized.clientName,
+      projectType: normalized.projectType,
+      projectDomain: normalized.projectDomain,
+      projectDomainOther: normalized.projectDomainOther,
+      summary: normalized.summary,
+      context: normalized.rawRequest ? { rawRequest: normalized.rawRequest } : {}
+    }));
   const store = await readDemoStore();
   const demoProposal = {
     ...proposal,
@@ -128,9 +145,7 @@ export async function generateProposal(input: ProposalGenerationInput): Promise<
 }
 
 async function normalizeProposalGenerationInput(input: ProposalGenerationInput) {
-  const sourceSeed = input.proposalSeedId
-    ? await getProposalSeedById(input.proposalSeedId)
-    : null;
+  const sourceSeed = input.proposalSeedId ? await getProposalSeedById(input.proposalSeedId) : null;
   const rawRequest = cleanText(input.rawRequest);
   const summary = cleanText(input.summary) ?? rawRequest ?? sourceSeed?.summary;
 
@@ -168,8 +183,7 @@ async function normalizeProposalGenerationInput(input: ProposalGenerationInput) 
     );
   }
 
-  const projectDomainOther =
-    cleanText(input.projectDomainOther) ?? sourceSeed?.projectDomainOther;
+  const projectDomainOther = cleanText(input.projectDomainOther) ?? sourceSeed?.projectDomainOther;
   const projectDomain =
     input.projectDomain ??
     sourceSeed?.projectDomain ??
@@ -183,8 +197,7 @@ async function normalizeProposalGenerationInput(input: ProposalGenerationInput) 
     throw new AppError(400, "Enter a custom project domain when selecting Other.");
   }
 
-  const title =
-    cleanText(input.title) ?? `${clientName} ${projectType} Proposal`;
+  const title = cleanText(input.title) ?? `${clientName} ${projectType} Proposal`;
 
   if (sourceSeed) {
     return {
@@ -251,10 +264,25 @@ export async function updateProposalStatus(
   await writeDemoStore(store);
   return proposal;
 }
+export async function editProposal(id: string, input: z.infer<typeof proposalEditSchema>) {
+  const user = await ensureCurrentUser();
+  const p = await proposals.edit(user.id, id, { ...input, timeline: input.timeline || null });
+  return p ? mapProposalRecord(p) : null;
+}
+export async function listProposalVersions(id: string) {
+  if (!isDatabaseMode(await getDataMode())) return [];
+  const user = await ensureCurrentUser();
+  return (await proposals.versions(user.id, id)).map((v) => ({
+    id: v.id,
+    version: v.version,
+    createdAt: v.createdAt.toISOString()
+  }));
+}
 
 function mapProposalRecord(record: {
   id: string;
   proposalSeedId: string | null;
+  projectId?: string | null;
   title: string;
   clientName: string;
   projectType: string | null;
@@ -276,6 +304,7 @@ function mapProposalRecord(record: {
   return {
     id: record.id,
     proposalSeedId: record.proposalSeedId ?? undefined,
+    projectId: record.projectId ?? undefined,
     title: record.title,
     clientName: record.clientName,
     projectType: record.projectType ?? undefined,
@@ -328,9 +357,10 @@ function buildSourceLabel(
   projectDomain: ReturnType<typeof inferProposalDomain>,
   projectDomainOther?: string
 ) {
-  const source = !sourceType || sourceType === "MANUAL"
-    ? "Generated from manual input"
-    : `Generated from ${formatSourceType(sourceType).toLowerCase()}`;
+  const source =
+    !sourceType || sourceType === "MANUAL"
+      ? "Generated from manual input"
+      : `Generated from ${formatSourceType(sourceType).toLowerCase()}`;
 
   return `${source} • ${getProposalDomainLabel(projectDomain, projectDomainOther) ?? "Other"}`;
 }

@@ -25,10 +25,7 @@ const PHASE_CONFIG = [
   }
 ] as const;
 
-const TOTAL_SCHEDULE_DAYS = PHASE_CONFIG.reduce(
-  (sum, phase) => sum + phase.durationDays,
-  0
-);
+const TOTAL_SCHEDULE_DAYS = PHASE_CONFIG.reduce((sum, phase) => sum + phase.durationDays, 0);
 
 export function getProposalMinimumLeadDays() {
   return TOTAL_SCHEDULE_DAYS - 1;
@@ -122,11 +119,7 @@ function buildBackplannedSchedule(deadline: Date, taskBreakdown: string[]) {
   };
 }
 
-function buildForwardProposalSchedule(
-  startDate: Date,
-  deadline: Date,
-  taskBreakdown: string[]
-) {
+function buildForwardProposalSchedule(startDate: Date, deadline: Date, taskBreakdown: string[]) {
   const totalDays = getInclusiveDateSpan(startDate, deadline);
   const phaseLengths = allocatePhaseDays(totalDays);
   const phases = [];
@@ -164,7 +157,9 @@ function allocatePhaseDays(totalDays: number) {
   const minimumDays = PHASE_CONFIG.length;
 
   if (totalDays <= minimumDays) {
-    return PHASE_CONFIG.map((_, index) => (index === PHASE_CONFIG.length - 1 ? totalDays - index : 1));
+    return PHASE_CONFIG.map((_, index) =>
+      index === PHASE_CONFIG.length - 1 ? totalDays - index : 1
+    );
   }
 
   const rawAllocations = PHASE_CONFIG.map(

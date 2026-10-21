@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { resetDemoStoreForTests } from "@/services/demo-store.service";
+import { loadDemoWorkspace, resetDemoStoreForTests } from "@/services/demo-store.service";
 
 const mocks = vi.hoisted(() => ({
   ensureCurrentUser: vi.fn(),
@@ -77,6 +77,16 @@ describe("data mode boundary", () => {
     });
   });
 
+  it("returns a safe project error when local demo mode has no database", async () => {
+    const { listProjects } = await import("@/services/project.service");
+
+    await expect(listProjects()).rejects.toMatchObject({
+      status: 503,
+      message: "Project workflows require a configured database."
+    });
+    expect(mocks.ensureCurrentUser).not.toHaveBeenCalled();
+  });
+
   it("returns null for a missing proposal detail in database mode", async () => {
     mocks.isDatabaseReady.mockResolvedValue(true);
     mocks.prisma.proposal.findFirst.mockResolvedValue(null);
@@ -92,9 +102,7 @@ describe("data mode boundary", () => {
 
     const { updateProposalStatus } = await import("@/services/proposal.service");
 
-    await expect(
-      updateProposalStatus("missing_proposal", "IN_REVIEW")
-    ).resolves.toBeNull();
+    await expect(updateProposalStatus("missing_proposal", "IN_REVIEW")).resolves.toBeNull();
   });
 
   it("returns empty seed and export reads in database mode", async () => {
@@ -103,9 +111,8 @@ describe("data mode boundary", () => {
     mocks.prisma.proposalSeed.findFirst.mockResolvedValue(null);
     mocks.prisma.export.findMany.mockResolvedValue([]);
 
-    const { listProposalSeeds, getProposalSeedById } = await import(
-      "@/services/proposal-seed.service"
-    );
+    const { listProposalSeeds, getProposalSeedById } =
+      await import("@/services/proposal-seed.service");
     const { listExportsForProposal } = await import("@/services/export.service");
 
     await expect(listProposalSeeds()).resolves.toEqual([]);
@@ -114,9 +121,11 @@ describe("data mode boundary", () => {
   });
 
   it("keeps JSON-backed demo records in demo mode", async () => {
-    const { listProposals, getProposalById } = await import(
-      "@/services/proposal.service"
-    );
+    const { listProposals } = await import("@/services/proposal.service");
+    await expect(listProposals()).resolves.toEqual([]);
+
+    await loadDemoWorkspace();
+    const { getProposalById } = await import("@/services/proposal.service");
     const { listProposalSeeds } = await import("@/services/proposal-seed.service");
 
     await expect(listProposals()).resolves.toEqual(
@@ -141,5 +150,18 @@ describe("data mode boundary", () => {
         })
       ])
     );
+  });
+
+  it("does not expose the demo loader on Vercel", async () => {
+    vi.stubEnv("VERCEL", "1");
+    const { POST } = await import("@/app/api/demo/load/route");
+    const response = await POST(
+      new Request("http://localhost/api/demo/load", { method: "POST" }) as never
+    );
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({
+      error: "Demo loading is unavailable in production."
+    });
   });
 });

@@ -1,0 +1,65 @@
+name: Production promotion
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Pull production configuration
+        run: npx vercel@59.23.2 pull --yes --environment=production
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - name: Build production artifact
+        run: npx vercel@59.23.2 build --prod
+        env:
+          BUILD_ID: ${{ github.sha }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - name: Stage production artifact without assigning domains
+        id: deploy
+        run: echo "url=$(npx vercel@59.23.2 deploy --prebuilt --prod --skip-domain)" >> "$GITHUB_OUTPUT"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - name: Smoke test staged production artifact
+        run: npm run test:smoke
+        env:
+          SMOKE_BASE_URL: ${{ steps.deploy.outputs.url }}
+          SMOKE_ACCESS_PASSWORD: ${{ secrets.PRODUCTION_ACCESS_PASSWORD }}
+          EXPECTED_BUILD_ID: ${{ github.sha }}
+      - name: Promote verified artifact
+        run: npx vercel@59.23.2 promote "$DEPLOYMENT_URL" --yes
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - name: Smoke test production
+        run: npm run test:smoke
+        env:
+          SMOKE_BASE_URL: ${{ secrets.PRODUCTION_URL }}
+          SMOKE_ACCESS_PASSWORD: ${{ secrets.PRODUCTION_ACCESS_PASSWORD }}
+          EXPECTED_BUILD_ID: ${{ github.sha }}
+      - name: Record production release
+        run: echo "Promoted ${{ steps.deploy.outputs.url }} with build ${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"

@@ -41,12 +41,18 @@ export default async function BriefingPage() {
         <article className="frame stack">
           <span className="pill">Today</span>
           <h2>1 upcoming sales call</h2>
-          <p>Today&apos;s briefing centers on a live website opportunity and the proposal work it should trigger.</p>
+          <p>
+            Today&apos;s briefing centers on a live website opportunity and the proposal work it
+            should trigger.
+          </p>
         </article>
         <article className="frame stack">
           <span className="pill">Proposals</span>
           <h2>1 quote request to turn into a proposal</h2>
-          <p>The story is intentionally tight: one quote request, one sales call, and one existing proposal due this week.</p>
+          <p>
+            The story is intentionally tight: one quote request, one sales call, and one existing
+            proposal due this week.
+          </p>
         </article>
       </section>
       <section className="frame stack">
@@ -58,7 +64,9 @@ export default async function BriefingPage() {
           <div className="card urgency-column">
             <div className="urgency-head">
               <span className="pill pill-alert">Needs action now</span>
-              <strong>{urgentItems.length} item{urgentItems.length === 1 ? "" : "s"}</strong>
+              <strong>
+                {urgentItems.length} item{urgentItems.length === 1 ? "" : "s"}
+              </strong>
             </div>
             <div className="list">
               {urgentItems.length > 0 ? (
@@ -78,7 +86,9 @@ export default async function BriefingPage() {
           <div className="card urgency-column">
             <div className="urgency-head">
               <span className="pill pill-neutral">Watch today</span>
-              <strong>{todayItems.length} item{todayItems.length === 1 ? "" : "s"}</strong>
+              <strong>
+                {todayItems.length} item{todayItems.length === 1 ? "" : "s"}
+              </strong>
             </div>
             <div className="list">
               {todayItems.length > 0 ? (
@@ -98,7 +108,9 @@ export default async function BriefingPage() {
           <div className="card urgency-column">
             <div className="urgency-head">
               <span className="pill">FYI</span>
-              <strong>{fyiItems.length} item{fyiItems.length === 1 ? "" : "s"}</strong>
+              <strong>
+                {fyiItems.length} item{fyiItems.length === 1 ? "" : "s"}
+              </strong>
             </div>
             <div className="list">
               {fyiItems.length > 0 ? (
@@ -147,7 +159,9 @@ export default async function BriefingPage() {
               <div className="card" key={email.id}>
                 <div className="row spread">
                   <strong>{email.subject}</strong>
-                  <span className={`pill ${email.requiresProposal ? "pill-alert" : "pill-neutral"}`}>
+                  <span
+                    className={`pill ${email.requiresProposal ? "pill-alert" : "pill-neutral"}`}
+                  >
                     {email.category.replaceAll("_", " ")}
                   </span>
                 </div>
@@ -180,8 +194,8 @@ export default async function BriefingPage() {
             <h2>Proposal handoff</h2>
           </div>
           <p>
-            Proposal seeds formalize context from briefing items, emails, or
-            manual inputs before proposal generation.
+            Proposal seeds formalize context from briefing items, emails, or manual inputs before
+            proposal generation.
           </p>
           <div className="list">
             {emailsNeedingProposal.map((email) => (
@@ -195,15 +209,15 @@ export default async function BriefingPage() {
                   <div className="handoff-reason">
                     <strong>Why this should move now</strong>
                     <p className="muted">
-                      Requested quote, concrete scope, and a short deadline window make this
-                      the clearest next proposal action.
+                      Requested quote, concrete scope, and a short deadline window make this the
+                      clearest next proposal action.
                     </p>
                   </div>
                   <div className="handoff-reason">
                     <strong>Recommended action</strong>
                     <p className="muted">
-                      Create a proposal seed, confirm timeline assumptions, and carry the
-                      project context into the generator.
+                      Create a proposal seed, confirm timeline assumptions, and carry the project
+                      context into the generator.
                     </p>
                   </div>
                 </div>
@@ -223,8 +237,9 @@ export default async function BriefingPage() {
               <div className="card">
                 <strong>{dueProposal.title}</strong>
                 <p className="muted">
-                  Existing proposal due this week: {formatProposalDate(dueProposal.dueDate) ?? "TBD"}. Keep this in
-                  view while generating the new quote.
+                  Existing proposal due this week:{" "}
+                  {formatProposalDate(dueProposal.dueDate) ?? "TBD"}. Keep this in view while
+                  generating the new quote.
                 </p>
                 <Link className="ghost-button" href="/proposals">
                   View proposal dashboard
