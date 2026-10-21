@@ -94,9 +94,21 @@ The request mentions obtaining a quote before the following week's board review,
 
 The exports contain no deployment URL or commit identifier, so they do not establish that their source record came from `76ca61f`. A separately saved Project Command Center page in the same Downloads folder points to the older `bh8acyatf` Preview and shows a different proposal with the original generic timeline; it is historical bug evidence, not provenance for these exports. The exports also do not verify the saved dashboard/detail display, one-click HTML download behavior, or the **Clear filters** empty state. Those browser checks remain open. Proposal creation and status persistence on the new Preview have not been independently evidenced here.
 
+### Protected browser retest on `ada6d3e`
+
+An interactive Chromium session completed Vercel SSO and application owner sign-in without exposing credentials to the test process. The tested deployment was `dpl_E6JYA3MzQsqGDJEf2gzAyaitTfeZ` at `https://project-command-center-7cckdx5ps-ryner88s-projects.vercel.app`, built from `ada6d3e`. Authenticated `/api/health` returned database mode, migrations present, and demo fallback disabled; all PR CI checks passed.
+
+| Check                           | Result              | Direct browser evidence                                                                                                                                                                                                                                                                       |
+| ------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| One-click HTML download         | Pass                | Clicking Sarah Chen's **Download HTML export** produced a 23,950-byte `.html` download without a new tab or Ctrl+S. Its SHA-256 matched the previously inspected HTML file exactly.                                                                                                           |
+| Filtered empty state            | Pass with follow-up | Filtering status to **Won** showed `Showing 0 of 2 proposals` and **No proposals match the current filters**. Clicking the empty-state **Clear filters** restored both proposals. The uncontrolled status selector still displayed **Won** after the list reset; a follow-up fix is required. |
+| Saved dashboard/detail timeline | Pass                | The Sarah Chen dashboard card and detail page showed October 23, 2026 to February 4, 2027 and `14 weeks 6 days delivery plan`. The four phase date ranges agreed with the inspected HTML and PDF. Reloading the detail page preserved these values.                                           |
+
+The direct download's matching hash ties the inspected HTML file to this tested Preview record. The PDF's original source deployment is still not independently established. The browser retest did not create a new proposal or repeat status persistence checks. The quote-before-board-review content question remains open.
+
 ## Scope and disposition
 
 - Internal application functionality: verified in local demo and local PostgreSQL modes.
-- Deployed preview browser behavior: owner sign-in was reported as passed on `ac9a0d8`; local HTML/PDF export content consistency was directly verified. One-click download, filtered empty state, saved dashboard/detail consistency, and the remaining workflow checks are unverified.
+- Deployed preview browser behavior: one-click HTML download, filtered empty-state recovery, and saved dashboard/detail timeline consistency passed on `ada6d3e`. The filter selector's stale label after clearing is being fixed and requires a new Preview retest. Proposal creation and status persistence were not repeated in this browser session.
 - Acme dashboard feature inventory and real-time reporting: still open in #22 and #23, pending client-facing approval.
 - No client analytics dashboard feature is validated by this proposal-management test.

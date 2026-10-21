@@ -170,7 +170,11 @@ export default async function ProposalsPage({ searchParams }: ProposalsPageProps
           <span className="eyebrow">All Proposals</span>
           <h2>Filter by status and domain, then work the queue in priority order</h2>
         </div>
-        <form className="dashboard-filters grid two" method="GET">
+        <form
+          className="dashboard-filters grid two"
+          key={`${params.status ?? "ALL"}:${params.domain ?? "ALL"}`}
+          method="GET"
+        >
           <label className="input-group">
             <span className="field-label">Status</span>
             <select defaultValue={params.status ?? "ALL"} name="status">
