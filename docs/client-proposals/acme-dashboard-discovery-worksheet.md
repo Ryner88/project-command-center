@@ -4,7 +4,7 @@
 
 **Source:** The [redacted client proposal](analytics-dashboard-mvp.redacted.pdf) describes an analytics dashboard for executive teams and promises real-time reporting. Its stated AI feature is assisted weekly summaries; the proposal does not define broader AI behavior. The [requirements audit](analytics-dashboard-mvp-requirements-audit.md) identifies the missing detail. This worksheet supports [#22](https://github.com/Ryner88/project-command-center/issues/22), [#23](https://github.com/Ryner88/project-command-center/issues/23), and [#24](https://github.com/Ryner88/project-command-center/issues/24).
 
-**Fixture status:** The user confirmed Sarah Chen and Apex Retail Co. are fictional scenarios. Their proposal exports can exercise a proposed requirements and reporting model, but neither is a source of Acme requirements or approval. Any Acme stakeholder interview and approval must come from a separately identified authorized person.
+**Fixture status:** For this discovery exercise, Sarah Chen and Apex Retail Co. are fictional scenarios. Their proposal exports can exercise a proposed requirements and reporting model, but neither is a source of Acme requirements or approval. Any Acme stakeholder interview and approval must come from a separately identified authorized person.
 
 ## Source and approval record
 

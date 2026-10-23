@@ -22,6 +22,7 @@ SARAH_PDF='/path/to/sarah-chen-sarah-chen-website-redesign-proposal.pdf'
 APEX_PDF='/path/to/apex-retail-co-e-commerce-platform-redesign.pdf'
 python3 - "$SARAH_PDF" "$APEX_PDF" <<'PY'
 import hashlib
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -30,9 +31,13 @@ fixtures = [
     (Path(sys.argv[1]), 'ed8f704cd5c8e5044c61eaac33e6845445ba1970385e839c37b8ae1ee39d9456', ('Sarah Chen', 'October 23, 2026', 'February 4, 2027')),
     (Path(sys.argv[2]), '44110dff8e657835f2563824c5bc94bb1817901797c07bb5241b195df444c412', ('Apex Retail Co.', 'November 1, 2026', 'June 15, 2027')),
 ]
+assert shutil.which('pdftotext'), 'pdftotext is required to verify the PDF text'
 for path, expected_hash, fields in fixtures:
     assert hashlib.sha256(path.read_bytes()).hexdigest() == expected_hash, path
-    content = subprocess.check_output(['pdftotext', '-layout', str(path), '-'], text=True)
+    try:
+        content = subprocess.check_output(['pdftotext', '-layout', str(path), '-'], text=True)
+    except subprocess.CalledProcessError as error:
+        raise RuntimeError(f'Cannot extract text from {path}') from error
     assert all(field in content for field in fields), path
     assert '$9,000 -' in content and '$14,000' in content, path
 
