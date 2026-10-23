@@ -4,23 +4,23 @@
 
 **Source:** The [redacted client proposal](analytics-dashboard-mvp.redacted.pdf) describes an analytics dashboard for executive teams and promises real-time reporting. Its stated AI feature is assisted weekly summaries; the proposal does not define broader AI behavior. The [requirements audit](analytics-dashboard-mvp-requirements-audit.md) identifies the missing detail. This worksheet supports [#22](https://github.com/Ryner88/project-command-center/issues/22), [#23](https://github.com/Ryner88/project-command-center/issues/23), and [#24](https://github.com/Ryner88/project-command-center/issues/24).
 
-**Sarah's role:** The user suggested Sarah as a source for this work. Her connection to Acme and authority to approve scope have not been verified. The Sarah Chen records elsewhere in this repository are mock agency-workflow data and provide no Acme dashboard requirements.
+**Fixture status:** For this discovery exercise, Sarah Chen and Apex Retail Co. are fictional scenarios. Their proposal exports can exercise a proposed requirements and reporting model, but neither is a source of Acme requirements or approval. Any Acme stakeholder interview and approval must come from a separately identified authorized person.
 
 ## Source and approval record
 
-Before using any answer as a commitment, record Sarah's full name, organization, role, relationship to Acme, interview date, and the location of her written response. Identify who at Acme can approve the feature scope, reporting targets, estimates, and milestone mapping. Record that person's explicit approval and version of the agreed scope. If Sarah supplies information but cannot approve it, retain her answers as discovery input.
+Before using any answer as a commitment, record the real stakeholder's full name, organization, role, relationship to Acme, interview date, and the location of their written response. Identify who at Acme can approve the feature scope, reporting targets, estimates, and milestone mapping. Record that person's explicit approval and version of the agreed scope. Do not enter fictional fixture identities as approvers.
 
-| Source or approval field                                        | Recorded value and evidence |
-| --------------------------------------------------------------- | --------------------------- |
-| Sarah's full name, organization, role, and relationship to Acme | Pending                     |
-| Interview date and written response location                    | Pending                     |
-| Authorized Acme approver and scope of approval authority        | Pending                     |
-| Explicit approval evidence and date                             | Pending                     |
-| Approved scope document and version                             | Pending                     |
+| Source or approval field                                              | Recorded value and evidence |
+| --------------------------------------------------------------------- | --------------------------- |
+| Real stakeholder's name, organization, role, and relationship to Acme | Pending                     |
+| Interview date and written response location                          | Pending                     |
+| Authorized Acme approver and scope of approval authority              | Pending                     |
+| Explicit approval evidence and date                                   | Pending                     |
+| Approved scope document and version                                   | Pending                     |
 
 ## #22 — Dashboard feature boundary
 
-Ask Sarah and the authorized Acme reviewer:
+Ask an authorized Acme reviewer:
 
 1. Which user groups need the dashboard? What can each group view, change, export, or administer? How will users sign in?
 2. Which pages are required? For each page, what decision does it support and what actions can a user take?
@@ -47,7 +47,7 @@ Do not select refresh intervals, latency targets, source systems, or integration
 
 ## #24 — AI-assisted weekly summaries
 
-Ask Sarah and the authorized Acme reviewer:
+Ask an authorized Acme reviewer:
 
 1. What questions should each summary answer, and which KPIs, comparisons, and explanations must it contain?
 2. Which approved data sources and reporting periods supply its inputs? How are source values and generated claims traced back to evidence?
@@ -62,7 +62,7 @@ Keep any model, provider, automation, or delivery-channel choice pending until t
 
 | Decision                                                             | Answer and evidence link | Proposed by | Authorized approver | Approval evidence and date | Approved scope version | Issue    |
 | -------------------------------------------------------------------- | ------------------------ | ----------- | ------------------- | -------------------------- | ---------------------- | -------- |
-| Sarah's role and approval authority                                  | Pending                  | —           | —                   | Pending                    | —                      | #22, #23 |
+| Real stakeholder's role and approval authority                       | Pending                  | —           | —                   | Pending                    | —                      | #22, #23 |
 | Dashboard pages, workflows, KPIs, charts, filters, and roles         | Pending                  | —           | —                   | Pending                    | —                      | #22      |
 | Feature acceptance tests and four-phase mapping                      | Pending                  | —           | —                   | Pending                    | —                      | #22      |
 | Named sources, integration ownership, volumes, and freshness targets | Pending                  | —           | —                   | Pending                    | —                      | #23      |
