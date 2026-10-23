@@ -1,14 +1,22 @@
 # Acme dashboard requirements discovery worksheet
 
-**Status:** Questions for discovery; no client requirements or approval recorded here.
+**Status:** Questions for discovery. Pending answers and decision-log entries are not client approval.
 
-**Source:** The [redacted client proposal](analytics-dashboard-mvp.redacted.pdf) promises an AI-powered analytics dashboard for executive teams, real-time reporting, and AI-assisted weekly summaries. The [requirements audit](analytics-dashboard-mvp-requirements-audit.md) identifies the missing detail. This worksheet supports [#22](https://github.com/Ryner88/project-command-center/issues/22) and [#23](https://github.com/Ryner88/project-command-center/issues/23).
+**Source:** The [redacted client proposal](analytics-dashboard-mvp.redacted.pdf) describes an analytics dashboard for executive teams and promises real-time reporting. Its stated AI feature is assisted weekly summaries; the proposal does not define broader AI behavior. The [requirements audit](analytics-dashboard-mvp-requirements-audit.md) identifies the missing detail. This worksheet supports [#22](https://github.com/Ryner88/project-command-center/issues/22), [#23](https://github.com/Ryner88/project-command-center/issues/23), and [#24](https://github.com/Ryner88/project-command-center/issues/24).
 
 **Sarah's role:** The user suggested Sarah as a source for this work. Her connection to Acme and authority to approve scope have not been verified. The Sarah Chen records elsewhere in this repository are mock agency-workflow data and provide no Acme dashboard requirements.
 
 ## Source and approval record
 
 Before using any answer as a commitment, record Sarah's full name, organization, role, relationship to Acme, interview date, and the location of her written response. Identify who at Acme can approve the feature scope, reporting targets, estimates, and milestone mapping. Record that person's explicit approval and version of the agreed scope. If Sarah supplies information but cannot approve it, retain her answers as discovery input.
+
+| Source or approval field                                        | Recorded value and evidence |
+| --------------------------------------------------------------- | --------------------------- |
+| Sarah's full name, organization, role, and relationship to Acme | Pending                     |
+| Interview date and written response location                    | Pending                     |
+| Authorized Acme approver and scope of approval authority        | Pending                     |
+| Explicit approval evidence and date                             | Pending                     |
+| Approved scope document and version                             | Pending                     |
 
 ## #22 — Dashboard feature boundary
 
@@ -37,14 +45,28 @@ For each proposed data source, ask:
 
 Do not select refresh intervals, latency targets, source systems, or integration ownership until Acme confirms them. The existing agency application's mock Gmail/Calendar data and proposal database are unrelated to this reporting contract.
 
+## #24 — AI-assisted weekly summaries
+
+Ask Sarah and the authorized Acme reviewer:
+
+1. What questions should each summary answer, and which KPIs, comparisons, and explanations must it contain?
+2. Which approved data sources and reporting periods supply its inputs? How are source values and generated claims traced back to evidence?
+3. When and how is it generated? Who receives or can view it, and through which approved channel?
+4. Who reviews, edits, and approves a summary before anyone relies on or shares it? What happens when the reviewer rejects it?
+5. How are missing, stale, contradictory, or unavailable source data and AI generation failures shown or handled?
+6. Which example summaries and failure cases must pass acceptance, and who approves the results?
+
+Keep any model, provider, automation, or delivery-channel choice pending until the client approves it. Record the summary's behavior, inputs, acceptance test, phase, and approval with the other MVP features.
+
 ## Decision log
 
-| Decision                                                             | Answer and evidence link | Proposed by | Approved by and date | Issue    |
-| -------------------------------------------------------------------- | ------------------------ | ----------- | -------------------- | -------- |
-| Sarah's role and approval authority                                  | Pending                  | —           | —                    | #22, #23 |
-| Dashboard pages, workflows, KPIs, charts, filters, and roles         | Pending                  | —           | —                    | #22      |
-| Feature acceptance tests and four-phase mapping                      | Pending                  | —           | —                    | #22      |
-| Named sources, integration ownership, volumes, and freshness targets | Pending                  | —           | —                    | #23      |
-| Stale-data, outage, recovery, and reconciliation tests               | Pending                  | —           | —                    | #23      |
+| Decision                                                             | Answer and evidence link | Proposed by | Authorized approver | Approval evidence and date | Approved scope version | Issue    |
+| -------------------------------------------------------------------- | ------------------------ | ----------- | ------------------- | -------------------------- | ---------------------- | -------- |
+| Sarah's role and approval authority                                  | Pending                  | —           | —                   | Pending                    | —                      | #22, #23 |
+| Dashboard pages, workflows, KPIs, charts, filters, and roles         | Pending                  | —           | —                   | Pending                    | —                      | #22      |
+| Feature acceptance tests and four-phase mapping                      | Pending                  | —           | —                   | Pending                    | —                      | #22      |
+| Named sources, integration ownership, volumes, and freshness targets | Pending                  | —           | —                   | Pending                    | —                      | #23      |
+| Stale-data, outage, recovery, and reconciliation tests               | Pending                  | —           | —                   | Pending                    | —                      | #23      |
+| Weekly summary behavior, inputs, review, failures, and tests         | Pending                  | —           | —                   | Pending                    | —                      | #24      |
 
-Issues #22 and #23 remain open until the approved answers are incorporated into the client-facing agreement or an expressly incorporated scope document.
+Issues #22, #23, and #24 remain open until the approved answers are incorporated into the client-facing agreement or an expressly incorporated scope document. This worksheet records discovery; it is not itself an approval artifact.
