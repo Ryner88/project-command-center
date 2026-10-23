@@ -1,0 +1,30 @@
+name: Robin review
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    if: |
+      github.event.issue.pull_request &&
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association) &&
+      startsWith(github.event.comment.body, '/robin')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    concurrency:
+      group: robin-${{ github.event.issue.number }}
+      cancel-in-progress: false
+    steps:
+      - name: Review pull request
+        uses: antongulin/robin@a42146f037ad2108dc4648385527e31ba5a53fc6 # v2.12.2
+        with:
+          github-token: ${{ github.token }}
+          llm-api-key: ${{ secrets.LLM_API_KEY }}
+          llm-base-url: ${{ secrets.LLM_BASE_URL }}
+          model: ${{ secrets.LLM_MODEL }}
